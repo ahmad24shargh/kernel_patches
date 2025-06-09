@@ -1,123 +1,102 @@
---- a/fs/exec.c	2025-02-25 16:26:47.929599800 -0500
-+++ b/fs/exec.c	2025-02-25 16:31:09.392181069 -0500
-@@ -2025,12 +2025,26 @@
- 	return retval;
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -2095,11 +2095,26 @@ void set_dumpable(struct mm_struct *mm, int value)
+ 	set_mask_bits(&mm->flags, MMF_DUMPABLE_MASK, value);
  }
  
-+#if defined(CONFIG_KSU) && defined(CONFIG_KSU_MANUAL_HOOK)
++#ifdef CONFIG_KSU
 +extern bool ksu_execveat_hook __read_mostly;
-+extern int ksu_handle_execveat(int *fd, struct filename **filename_ptr, void *argv,
-+			void *envp, int *flags);
-+extern int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
-+				 void *argv, void *envp, int *flags);
++extern int ksu_handle_execve_sucompat(int *fd, const char __user **filename_user,
++			       void *__never_use_argv, void *__never_use_envp,
++			       int *__never_use_flags);
++extern int ksu_handle_execve_ksud(const char __user *filename_user,
++			const char __user *const __user *__argv);
 +#endif
 +
- static int do_execve(struct filename *filename,
- 	const char __user *const __user *__argv,
- 	const char __user *const __user *__envp)
+ SYSCALL_DEFINE3(execve,
+ 		const char __user *, filename,
+ 		const char __user *const __user *, argv,
+ 		const char __user *const __user *, envp)
  {
- 	struct user_arg_ptr argv = { .ptr.native = __argv };
- 	struct user_arg_ptr envp = { .ptr.native = __envp };
-+#if defined(CONFIG_KSU) && defined(CONFIG_KSU_MANUAL_HOOK)
++#ifdef CONFIG_KSU
 +	if (unlikely(ksu_execveat_hook))
-+		ksu_handle_execveat((int *)AT_FDCWD, &filename, &argv, &envp, 0);
++		ksu_handle_execve_ksud(filename, argv);
 +	else
-+		ksu_handle_execveat_sucompat((int *)AT_FDCWD, &filename, NULL, NULL, NULL);
++		ksu_handle_execve_sucompat((int *)AT_FDCWD, &filename, NULL, NULL, NULL);
 +#endif
- 	return do_execveat_common(AT_FDCWD, filename, argv, envp, 0);
+ 	return do_execve(getname(filename), argv, envp);
  }
  
-@@ -2058,6 +2072,10 @@
- 		.is_compat = true,
- 		.ptr.compat = __envp,
- 	};
-+#if defined(CONFIG_KSU) && defined(CONFIG_KSU_MANUAL_HOOK)
+@@ -2119,6 +2138,10 @@ COMPAT_SYSCALL_DEFINE3(execve, const char __user *, filename,
+ 	const compat_uptr_t __user *, argv,
+ 	const compat_uptr_t __user *, envp)
+ {
++#ifdef CONFIG_KSU // 32-bit su and 32-on-64 support
 +	if (!ksu_execveat_hook)
-+		ksu_handle_execveat_sucompat((int *)AT_FDCWD, &filename, NULL, NULL, NULL); /* 32-bit su */
++		ksu_handle_execve_sucompat((int *)AT_FDCWD, &filename, NULL, NULL, NULL);
 +#endif
- 	return do_execveat_common(AT_FDCWD, filename, argv, envp, 0);
+ 	return compat_do_execve(getname(filename), argv, envp);
  }
  
---- a/fs/open.c	2025-02-25 16:26:48.056318400 -0500
-+++ b/fs/open.c	2025-02-25 16:33:35.583177999 -0500
-@@ -466,8 +466,16 @@
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -450,8 +450,16 @@ long do_faccessat(int dfd, const char __user *filename, int mode)
  	return res;
  }
  
-+#if defined(CONFIG_KSU) && defined(CONFIG_KSU_MANUAL_HOOK)
++#ifdef CONFIG_KSU
 +extern int ksu_handle_faccessat(int *dfd, const char __user **filename_user, int *mode,
 +			                    int *flags);
 +#endif
 +
  SYSCALL_DEFINE3(faccessat, int, dfd, const char __user *, filename, int, mode)
  {
-+#if defined(CONFIG_KSU) && defined(CONFIG_KSU_MANUAL_HOOK)
++#ifdef CONFIG_KSU
 +	ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
 +#endif
- 	return do_faccessat(dfd, filename, mode, 0);
+ 	return do_faccessat(dfd, filename, mode);
  }
  
---- a/fs/read_write.c	2025-02-25 16:26:48.085561100 -0500
-+++ b/fs/read_write.c	2025-02-25 16:34:38.409673281 -0500
-@@ -628,8 +628,18 @@
- 	return ret;
- }
- 
-+#if defined(CONFIG_KSU) && defined(CONFIG_KSU_MANUAL_HOOK)
-+extern bool ksu_vfs_read_hook __read_mostly;
-+extern int ksu_handle_sys_read(unsigned int fd, char __user **buf_ptr,
-+			size_t *count_ptr);
-+#endif
-+
- SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
- {
-+#if defined(CONFIG_KSU) && defined(CONFIG_KSU_MANUAL_HOOK)
-+	if (unlikely(ksu_vfs_read_hook)) 
-+		ksu_handle_sys_read(fd, &buf, &count);
-+#endif
- 	return ksys_read(fd, buf, count);
- }
- 
---- a/fs/stat.c	2025-02-25 16:26:48.095308700 -0500
-+++ b/fs/stat.c	2025-02-25 16:40:30.177700209 -0500
-@@ -401,6 +401,10 @@
+--- a/fs/stat.c
++++ b/fs/stat.c
+@@ -353,6 +353,10 @@ SYSCALL_DEFINE2(newlstat, const char __user *, filename,
  	return cp_new_stat(&stat, statbuf);
  }
  
-+#if defined(CONFIG_KSU) && defined(CONFIG_KSU_MANUAL_HOOK)
++#ifdef CONFIG_KSU
 +extern int ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags);
 +#endif
 +
  #if !defined(__ARCH_WANT_STAT64) || defined(__ARCH_WANT_SYS_NEWFSTATAT)
  SYSCALL_DEFINE4(newfstatat, int, dfd, const char __user *, filename,
  		struct stat __user *, statbuf, int, flag)
-@@ -408,6 +412,9 @@
+@@ -360,6 +364,9 @@ SYSCALL_DEFINE4(newfstatat, int, dfd, const char __user *, filename,
  	struct kstat stat;
  	int error;
  
-+#if defined(CONFIG_KSU) && defined(CONFIG_KSU_MANUAL_HOOK)
++#ifdef CONFIG_KSU
 +	ksu_handle_stat(&dfd, &filename, &flag);
 +#endif
  	error = vfs_fstatat(dfd, filename, &stat, flag);
  	if (error)
  		return error;
-@@ -559,6 +566,9 @@
+@@ -504,6 +511,9 @@ SYSCALL_DEFINE4(fstatat64, int, dfd, const char __user *, filename,
  	struct kstat stat;
  	int error;
  
-+#if defined(CONFIG_KSU) && defined(CONFIG_COMPAT) && defined(CONFIG_KSU_MANUAL_HOOK)
-+	ksu_handle_stat(&dfd, &filename, &flag); /* 32-bit su */
++#ifdef CONFIG_KSU // 32-bit su
++	ksu_handle_stat(&dfd, &filename, &flag); 
 +#endif
  	error = vfs_fstatat(dfd, filename, &stat, flag);
  	if (error)
  		return error;
---- a/drivers/input/input.c	2025-02-25 16:26:13.021725500 -0500
-+++ b/drivers/input/input.c	2025-02-25 16:47:15.869567274 -0500
-@@ -446,11 +446,21 @@
+--- a/drivers/input/input.c
++++ b/drivers/input/input.c
+@@ -436,11 +436,21 @@ static void input_handle_event(struct input_dev *dev,
   * to 'seed' initial state of a switch or initial position of absolute
   * axis, etc.
   */
-+#if defined(CONFIG_KSU) && defined(CONFIG_KSU_MANUAL_HOOK)
++#ifdef CONFIG_KSU
 +extern bool ksu_input_hook __read_mostly;
 +extern int ksu_handle_input_handle_event(unsigned int *type, unsigned int *code, int *value);
 +#endif
@@ -127,7 +106,7 @@
  {
  	unsigned long flags;
  
-+#if defined(CONFIG_KSU) && defined(CONFIG_KSU_MANUAL_HOOK)
++#ifdef CONFIG_KSU
 +	if (unlikely(ksu_input_hook))
 +		ksu_handle_input_handle_event(&type, &code, &value);
 +#endif
@@ -135,24 +114,23 @@
  	if (is_event_supported(type, dev->evbit, EV_MAX)) {
  
  		spin_lock_irqsave(&dev->event_lock, flags);
---- a/drivers/tty/pty.c	2025-02-25 16:26:47.666415400 -0500
-+++ b/drivers/tty/pty.c	2025-02-25 16:50:08.191037416 -0500
-@@ -702,11 +702,18 @@
-  *	This provides our locking for the tty pointer.
-  */
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -628,8 +628,18 @@ ssize_t ksys_read(unsigned int fd, char __user *buf, size_t count)
+ 	return ret;
+ }
  
-+#if defined(CONFIG_KSU) && defined(CONFIG_KSU_MANUAL_HOOK)
-+extern int ksu_handle_devpts(struct inode*);
++#ifdef CONFIG_KSU
++extern bool ksu_vfs_read_hook __read_mostly;
++extern int ksu_handle_sys_read(unsigned int fd, char __user **buf_ptr,
++			size_t *count_ptr);
 +#endif
 +
- static struct tty_struct *pts_unix98_lookup(struct tty_driver *driver,
- 		struct file *file, int idx)
+ SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
  {
- 	struct tty_struct *tty;
- 
-+#if defined(CONFIG_KSU) && defined(CONFIG_KSU_MANUAL_HOOK)
-+	ksu_handle_devpts((struct inode *)file->f_path.dentry->d_inode);
++#ifdef CONFIG_KSU
++	if (unlikely(ksu_vfs_read_hook)) 
++		ksu_handle_sys_read(fd, &buf, &count);
 +#endif
- 	mutex_lock(&devpts_mutex);
- 	tty = devpts_get_priv(file->f_path.dentry);
- 	mutex_unlock(&devpts_mutex);
+ 	return ksys_read(fd, buf, count);
+ }
