@@ -4,7 +4,7 @@
 ### AnyKernel setup
 # global properties
 properties() { '
-kernel.string= ShirkNeko patched kernel with SukiSU+KPM
+kernel.string=Wild Plus Kernel by TheWildJames or Morgan Weedman
 do.devicecheck=0
 do.modules=0
 do.systemless=0
@@ -44,7 +44,7 @@ ui_print " " "  -> ksu_supported: $ksu_supported"
 $ksu_supported || abort "  -> Non-GKI device, abort."
 
 # boot install
-if [ -L "/dev/block/bootdevice/by-name/init_boot_a" -o -L "/dev/block/by-name/init_boot_a" ]; then
+if [ -L "/dev/block/bootdevice/by-name/init_boot_a" -o -L "/dev/block/by-name/init_boot_a" -o -L "/dev/block/bootdevice/by-name/init_boot" -o -L "/dev/block/by-name/init_boot" ]; then
     split_boot # for devices with init_boot ramdisk
     flash_boot # for devices with init_boot ramdisk
 else
