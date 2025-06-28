@@ -127,6 +127,14 @@ diff -u a/include/linux/tracehook.h b/include/linux/tracehook.h
 diff -u a/kernel/ptrace.c b/kernel/ptrace.c
 --- a/kernel/ptrace.c	2025-05-28 18:03:08.850551845 +0000
 +++ b/kernel/ptrace.c	2025-05-28 18:15:35.463720730 +0000
+@@ -183,6 +183,7 @@ static void ptrace_unfreeze_traced(struct task_struct *task)
+ static int ptrace_check_attach(struct task_struct *child, bool ignore_state)
+ {
+ 	int ret = -ESRCH;
++	child->ptrace_message = 0;
+ 
+ 	/*
+ 	 * We take the read lock around doing both checks to close a
 @@ -604,6 +604,10 @@
  	 * the comment in ptrace_resume().
  	 */
