@@ -1,6 +1,6 @@
-diff -Naur KSUN-ORIG/kernel/Kconfig a/kernel/Kconfig
---- KSUN-ORIG/kernel/Kconfig	2025-07-11 21:17:25.376055590 +0330
-+++ a/kernel/Kconfig	2025-07-13 03:14:56.954354973 +0330
+diff -Naur a/kernel/Kconfig b/kernel/Kconfig
+--- a/kernel/Kconfig	2025-07-11 21:17:25.376055590 +0330
++++ b/kernel/Kconfig	2025-07-13 03:14:56.954354973 +0330
 @@ -40,4 +40,139 @@
  	  Disabling this is mostly only useful for kernel 4.1 and older.
  	  Make sure to implement manual hooks on security/security.c.
@@ -141,9 +141,9 @@ diff -Naur KSUN-ORIG/kernel/Kconfig a/kernel/Kconfig
 +endmenu
 +
  endmenu
-diff -Naur KSUN-ORIG/kernel/Makefile a/kernel/Makefile
---- KSUN-ORIG/kernel/Makefile	2025-07-11 21:17:25.379388923 +0330
-+++ a/kernel/Makefile	2025-07-13 03:14:56.954354973 +0330
+diff -Naur a/kernel/Makefile b/kernel/Makefile
+--- a/kernel/Makefile	2025-07-11 21:17:25.379388923 +0330
++++ b/kernel/Makefile	2025-07-13 03:14:56.954354973 +0330
 @@ -150,4 +150,81 @@
  ccflags-y += -Wno-implicit-function-declaration -Wno-strict-prototypes -Wno-int-conversion -Wno-gcc-compat
  ccflags-y += -Wno-declaration-after-statement -Wno-unused-function
@@ -226,9 +226,9 @@ diff -Naur KSUN-ORIG/kernel/Makefile a/kernel/Makefile
 +$(info -- Read: https://gitlab.com/simonpunk/susfs4ksu)
 +endif
  # Keep a new line here!! Because someone may append config
-diff -Naur KSUN-ORIG/kernel/allowlist.c a/kernel/allowlist.c
---- KSUN-ORIG/kernel/allowlist.c	2025-07-11 21:17:25.379388923 +0330
-+++ a/kernel/allowlist.c	2025-07-13 03:14:56.954354973 +0330
+diff -Naur a/kernel/allowlist.c b/kernel/allowlist.c
+--- a/kernel/allowlist.c	2025-07-11 21:17:25.379388923 +0330
++++ b/kernel/allowlist.c	2025-07-13 03:14:56.954354973 +0330
 @@ -95,7 +95,7 @@
  static struct work_struct ksu_save_work;
  static struct work_struct ksu_load_work;
@@ -274,9 +274,9 @@ diff -Naur KSUN-ORIG/kernel/allowlist.c a/kernel/allowlist.c
  {
  	return ksu_queue_work(&ksu_save_work);
  }
-diff -Naur KSUN-ORIG/kernel/apk_sign.c a/kernel/apk_sign.c
---- KSUN-ORIG/kernel/apk_sign.c	2025-07-11 21:17:25.379388923 +0330
-+++ a/kernel/apk_sign.c	2025-07-13 03:14:56.954354973 +0330
+diff -Naur a/kernel/apk_sign.c b/kernel/apk_sign.c
+--- a/kernel/apk_sign.c	2025-07-11 21:17:25.379388923 +0330
++++ b/kernel/apk_sign.c	2025-07-13 03:14:56.954354973 +0330
 @@ -315,7 +315,7 @@
  
  #endif
@@ -297,9 +297,9 @@ diff -Naur KSUN-ORIG/kernel/apk_sign.c a/kernel/apk_sign.c
 +	return check_v2_signature(path, EXPECTED_SIZE, EXPECTED_HASH);
 +#endif
  }
-diff -Naur KSUN-ORIG/kernel/apk_sign.h a/kernel/apk_sign.h
---- KSUN-ORIG/kernel/apk_sign.h	2025-07-11 21:17:25.379388923 +0330
-+++ a/kernel/apk_sign.h	2025-07-13 03:14:56.954354973 +0330
+diff -Naur a/kernel/apk_sign.h b/kernel/apk_sign.h
+--- a/kernel/apk_sign.h	2025-07-11 21:17:25.379388923 +0330
++++ b/kernel/apk_sign.h	2025-07-13 03:14:56.954354973 +0330
 @@ -3,6 +3,6 @@
  
  #include <linux/types.h>
@@ -308,9 +308,9 @@ diff -Naur KSUN-ORIG/kernel/apk_sign.h a/kernel/apk_sign.h
 +bool ksu_is_manager_apk(char *path);
  
  #endif
-diff -Naur KSUN-ORIG/kernel/core_hook.c a/kernel/core_hook.c
---- KSUN-ORIG/kernel/core_hook.c	2025-07-13 03:58:24.774353978 +0330
-+++ a/kernel/core_hook.c	2025-07-13 03:35:18.674354507 +0330
+diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
+--- a/kernel/core_hook.c	2025-07-13 03:58:24.774353978 +0330
++++ b/kernel/core_hook.c	2025-07-13 04:33:05.622353184 +0330
 @@ -35,6 +35,10 @@
  #include <linux/vmalloc.h>
  #endif
@@ -765,7 +765,7 @@ diff -Naur KSUN-ORIG/kernel/core_hook.c a/kernel/core_hook.c
 +			int error = 0;
 +			int len_of_susfs_version = strlen(SUSFS_VERSION);
 +			char *susfs_version = SUSFS_VERSION;
-+			if (!ksu_access_ok((void __user*)arg3, len_of_susfs_version1)) {
++			if (!ksu_access_ok((void __user*)arg3, len_of_susfs_version)) {
 +				pr_err("susfs: CMD_SUSFS_SHOW_VERSION -> arg3 is not accessible\n");
 +				return 0;
 +			}
@@ -773,7 +773,7 @@ diff -Naur KSUN-ORIG/kernel/core_hook.c a/kernel/core_hook.c
 +				pr_err("susfs: CMD_SUSFS_SHOW_VERSION -> arg5 is not accessible\n");
 +				return 0;
 +			}
-+			error = copy_to_user((void __user*)arg3, (void*)susfs_version, len_of_susfs_version1);
++			error = copy_to_user((void __user*)arg3, (void*)susfs_version, len_of_susfs_version);
 +			pr_info("susfs: CMD_SUSFS_SHOW_VERSION -> ret: %d\n", error);
 +			if (copy_to_user((void __user*)arg5, &error, sizeof(error)))
 +				pr_info("susfs: copy_to_user() failed\n");
@@ -803,7 +803,7 @@ diff -Naur KSUN-ORIG/kernel/core_hook.c a/kernel/core_hook.c
 +			int error = 0;
 +			int len_of_variant = strlen(SUSFS_VARIANT);
 +			char *susfs_variant = SUSFS_VARIANT;
-+			if (!ksu_access_ok((void __user*)arg3, len_of_variant1)) {
++			if (!ksu_access_ok((void __user*)arg3, len_of_variant)) {
 +				pr_err("susfs: CMD_SUSFS_SHOW_VARIANT -> arg3 is not accessible\n");
 +				return 0;
 +			}
@@ -811,7 +811,7 @@ diff -Naur KSUN-ORIG/kernel/core_hook.c a/kernel/core_hook.c
 +				pr_err("susfs: CMD_SUSFS_SHOW_VARIANT -> arg5 is not accessible\n");
 +				return 0;
 +			}
-+			error = copy_to_user((void __user*)arg3, (void*)susfs_variant, len_of_variant1);
++			error = copy_to_user((void __user*)arg3, (void*)susfs_variant, len_of_variant);
 +			pr_info("susfs: CMD_SUSFS_SHOW_VARIANT -> ret: %d\n", error);
 +			if (copy_to_user((void __user*)arg5, &error, sizeof(error)))
 +				pr_info("susfs: copy_to_user() failed\n");
@@ -913,9 +913,9 @@ diff -Naur KSUN-ORIG/kernel/core_hook.c a/kernel/core_hook.c
 +	ksu_try_umount("/vendor", true, 0, uid);
 +	ksu_try_umount("/product", true, 0, uid);
 +	ksu_try_umount("/odm", true, 0, uid);
-+	// - For '/data/adb/modules' we pass 'false' here because it is a loop device that we can't determine whether 
++	// - For '/datb/adb/modules' we pass 'false' here because it is a loop device that we can't determine whether 
 +	//   its dev_name is KSU or not, and it is safe to just umount it if it is really a mountpoint
-+	ksu_try_umount("/data/adb/modules", false, MNT_DETACH, uid);
++	ksu_try_umount("/datb/adb/modules", false, MNT_DETACH, uid);
 +	/* For both Legacy KSU and Magic Mount KSU */
 +	ksu_try_umount("/debug_ramdisk", true, MNT_DETACH, uid);
 +}
@@ -1000,19 +1000,19 @@ diff -Naur KSUN-ORIG/kernel/core_hook.c a/kernel/core_hook.c
 +	susfs_try_umount_all(new_uid.val);
 +#else
  	// fixme: use `collect_mounts` and `iterate_mount` to iterate all mountpoint and
- 	// filter the mountpoint whose target is `/data/adb`
+ 	// filter the mountpoint whose target is `/datb/adb`
 -	try_umount("/odm", true, 0);
 -	try_umount("/system", true, 0);
 -	try_umount("/system_ext", true, 0);
 -	try_umount("/vendor", true, 0);
 -	try_umount("/product", true, 0);
--	try_umount("/data/adb/modules", false, MNT_DETACH);
+-	try_umount("/datb/adb/modules", false, MNT_DETACH);
 +	ksu_try_umount("/odm", true, 0);
 +	ksu_try_umount("/system", true, 0);
 +	ksu_try_umount("/system_ext", true, 0);
 +	ksu_try_umount("/vendor", true, 0);
 +	ksu_try_umount("/product", true, 0);
-+	ksu_try_umount("/data/adb/modules", false, MNT_DETACH);
++	ksu_try_umount("/datb/adb/modules", false, MNT_DETACH);
  
  	// try umount ksu temp path
 -	try_umount("/debug_ramdisk", false, MNT_DETACH);
@@ -1033,9 +1033,9 @@ diff -Naur KSUN-ORIG/kernel/core_hook.c a/kernel/core_hook.c
  
  	return 0;
  }
-diff -Naur KSUN-ORIG/kernel/kernel_compat.c a/kernel/kernel_compat.c
---- KSUN-ORIG/kernel/kernel_compat.c	2025-07-11 21:17:25.379388923 +0330
-+++ a/kernel/kernel_compat.c	2025-07-13 03:14:56.958354973 +0330
+diff -Naur a/kernel/kernel_compat.c b/kernel/kernel_compat.c
+--- a/kernel/kernel_compat.c	2025-07-11 21:17:25.379388923 +0330
++++ b/kernel/kernel_compat.c	2025-07-13 03:14:56.958354973 +0330
 @@ -76,6 +76,16 @@
  	task_unlock(current);
  }
@@ -1053,9 +1053,9 @@ diff -Naur KSUN-ORIG/kernel/kernel_compat.c a/kernel/kernel_compat.c
  struct file *ksu_filp_open_compat(const char *filename, int flags, umode_t mode)
  {
  #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 10, 0) || defined(CONFIG_IS_HW_HISI) || defined(CONFIG_KSU_ALLOWLIST_WORKAROUND)
-diff -Naur KSUN-ORIG/kernel/kernel_compat.h a/kernel/kernel_compat.h
---- KSUN-ORIG/kernel/kernel_compat.h	2025-07-11 21:17:25.379388923 +0330
-+++ a/kernel/kernel_compat.h	2025-07-13 03:14:56.958354973 +0330
+diff -Naur a/kernel/kernel_compat.h b/kernel/kernel_compat.h
+--- a/kernel/kernel_compat.h	2025-07-11 21:17:25.379388923 +0330
++++ b/kernel/kernel_compat.h	2025-07-13 03:14:56.958354973 +0330
 @@ -29,6 +29,7 @@
  #endif
  
@@ -1064,9 +1064,9 @@ diff -Naur KSUN-ORIG/kernel/kernel_compat.h a/kernel/kernel_compat.h
  extern struct file *ksu_filp_open_compat(const char *filename, int flags,
  					 umode_t mode);
  extern ssize_t ksu_kernel_read_compat(struct file *p, void *buf, size_t count,
-diff -Naur KSUN-ORIG/kernel/ksu.c a/kernel/ksu.c
---- KSUN-ORIG/kernel/ksu.c	2025-07-11 21:17:25.379388923 +0330
-+++ a/kernel/ksu.c	2025-07-13 03:14:56.958354973 +0330
+diff -Naur a/kernel/ksu.c b/kernel/ksu.c
+--- a/kernel/ksu.c	2025-07-11 21:17:25.379388923 +0330
++++ b/kernel/ksu.c	2025-07-13 03:14:56.958354973 +0330
 @@ -11,6 +11,10 @@
  #include "ksu.h"
  #include "throne_tracker.h"
@@ -1118,9 +1118,9 @@ diff -Naur KSUN-ORIG/kernel/ksu.c a/kernel/ksu.c
  
  MODULE_LICENSE("GPL");
  MODULE_AUTHOR("weishu");
-diff -Naur KSUN-ORIG/kernel/ksud.c a/kernel/ksud.c
---- KSUN-ORIG/kernel/ksud.c	2025-07-11 21:17:25.382722257 +0330
-+++ a/kernel/ksud.c	2025-07-13 03:14:56.958354973 +0330
+diff -Naur a/kernel/ksud.c b/kernel/ksud.c
+--- a/kernel/ksud.c	2025-07-11 21:17:25.382722257 +0330
++++ b/kernel/ksud.c	2025-07-13 03:14:56.958354973 +0330
 @@ -63,7 +63,9 @@
  bool ksu_vfs_read_hook __read_mostly = true;
  bool ksu_execveat_hook __read_mostly = true;
@@ -1198,21 +1198,21 @@ diff -Naur KSUN-ORIG/kernel/ksud.c a/kernel/ksud.c
  }
  
  static void stop_input_hook()
-diff -Naur KSUN-ORIG/kernel/ksud.h a/kernel/ksud.h
---- KSUN-ORIG/kernel/ksud.h	2025-07-11 21:17:25.382722257 +0330
-+++ a/kernel/ksud.h	2025-07-13 03:14:56.958354973 +0330
+diff -Naur a/kernel/ksud.h b/kernel/ksud.h
+--- a/kernel/ksud.h	2025-07-11 21:17:25.382722257 +0330
++++ b/kernel/ksud.h	2025-07-13 03:14:56.958354973 +0330
 @@ -5,7 +5,7 @@
  
- #define KSUD_PATH "/data/adb/ksud"
+ #define KSUD_PATH "/datb/adb/ksud"
  
 -void on_post_fs_data(void);
 +void ksu_on_post_fs_data(void);
  
  bool ksu_is_safe_mode(void);
  
-diff -Naur KSUN-ORIG/kernel/manager.h a/kernel/manager.h
---- KSUN-ORIG/kernel/manager.h	2025-07-11 21:17:25.382722257 +0330
-+++ a/kernel/manager.h	2025-07-13 03:14:56.962354973 +0330
+diff -Naur a/kernel/manager.h b/kernel/manager.h
+--- a/kernel/manager.h	2025-07-11 21:17:25.382722257 +0330
++++ b/kernel/manager.h	2025-07-13 03:14:56.962354973 +0330
 @@ -13,7 +13,7 @@
  	return ksu_manager_uid != KSU_INVALID_UID;
  }
@@ -1222,9 +1222,9 @@ diff -Naur KSUN-ORIG/kernel/manager.h a/kernel/manager.h
  {
  	return unlikely(ksu_manager_uid == current_uid().val);
  }
-diff -Naur KSUN-ORIG/kernel/selinux/rules.c a/kernel/selinux/rules.c
---- KSUN-ORIG/kernel/selinux/rules.c	2025-07-11 21:17:25.382722257 +0330
-+++ a/kernel/selinux/rules.c	2025-07-13 03:14:56.962354973 +0330
+diff -Naur a/kernel/selinux/rules.c b/kernel/selinux/rules.c
+--- a/kernel/selinux/rules.c	2025-07-11 21:17:25.382722257 +0330
++++ b/kernel/selinux/rules.c	2025-07-13 03:14:56.962354973 +0330
 @@ -38,11 +38,11 @@
  
  static DEFINE_MUTEX(ksu_rules);
@@ -1269,9 +1269,9 @@ diff -Naur KSUN-ORIG/kernel/selinux/rules.c a/kernel/selinux/rules.c
  		pr_info("SELinux permissive or disabled when handle policy!\n");
  	}
  	
-diff -Naur KSUN-ORIG/kernel/selinux/selinux.c a/kernel/selinux/selinux.c
---- KSUN-ORIG/kernel/selinux/selinux.c	2025-07-11 21:17:25.382722257 +0330
-+++ a/kernel/selinux/selinux.c	2025-07-13 03:14:56.962354973 +0330
+diff -Naur a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
+--- a/kernel/selinux/selinux.c	2025-07-11 21:17:25.382722257 +0330
++++ b/kernel/selinux/selinux.c	2025-07-13 03:14:56.962354973 +0330
 @@ -8,6 +8,14 @@
  
  #define KERNEL_SU_DOMAIN "u:r:su:s0"
@@ -1416,9 +1416,9 @@ diff -Naur KSUN-ORIG/kernel/selinux/selinux.c a/kernel/selinux/selinux.c
  #define DEVPTS_DOMAIN "u:object_r:ksu_file:s0"
  
  u32 ksu_get_devpts_sid()
-diff -Naur KSUN-ORIG/kernel/selinux/selinux.h a/kernel/selinux/selinux.h
---- KSUN-ORIG/kernel/selinux/selinux.h	2025-07-11 21:17:25.382722257 +0330
-+++ a/kernel/selinux/selinux.h	2025-07-13 03:14:56.962354973 +0330
+diff -Naur a/kernel/selinux/selinux.h b/kernel/selinux/selinux.h
+--- a/kernel/selinux/selinux.h	2025-07-11 21:17:25.382722257 +0330
++++ b/kernel/selinux/selinux.h	2025-07-13 03:14:56.962354973 +0330
 @@ -8,17 +8,29 @@
  #define KSU_COMPAT_USE_SELINUX_STATE
  #endif
@@ -1455,9 +1455,9 @@ diff -Naur KSUN-ORIG/kernel/selinux/selinux.h a/kernel/selinux/selinux.h
  
  u32 ksu_get_devpts_sid();
  
-diff -Naur KSUN-ORIG/kernel/sucompat.c a/kernel/sucompat.c
---- KSUN-ORIG/kernel/sucompat.c	2025-07-11 21:17:25.382722257 +0330
-+++ a/kernel/sucompat.c	2025-07-13 03:14:56.962354973 +0330
+diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
+--- a/kernel/sucompat.c	2025-07-11 21:17:25.382722257 +0330
++++ b/kernel/sucompat.c	2025-07-13 03:14:56.962354973 +0330
 @@ -13,6 +13,9 @@
  #else
  #include <linux/sched.h>
@@ -1628,9 +1628,9 @@ diff -Naur KSUN-ORIG/kernel/sucompat.c a/kernel/sucompat.c
 +}
 +#endif // #ifdef CONFIG_KSU_SUSFS_SUS_SU
 +
-diff -Naur KSUN-ORIG/kernel/throne_tracker.c a/kernel/throne_tracker.c
---- KSUN-ORIG/kernel/throne_tracker.c	2025-07-11 21:17:25.382722257 +0330
-+++ a/kernel/throne_tracker.c	2025-07-13 03:14:56.962354973 +0330
+diff -Naur a/kernel/throne_tracker.c b/kernel/throne_tracker.c
+--- a/kernel/throne_tracker.c	2025-07-11 21:17:25.382722257 +0330
++++ b/kernel/throne_tracker.c	2025-07-13 03:14:56.962354973 +0330
 @@ -192,7 +192,7 @@
  				}
  			}
@@ -1649,9 +1649,9 @@ diff -Naur KSUN-ORIG/kernel/throne_tracker.c a/kernel/throne_tracker.c
  {
  	struct file *fp;
  	int tries = 0;
-diff -Naur KSUN-ORIG/kernel/throne_tracker.h a/kernel/throne_tracker.h
---- KSUN-ORIG/kernel/throne_tracker.h	2025-07-11 21:17:25.382722257 +0330
-+++ a/kernel/throne_tracker.h	2025-07-13 03:14:56.962354973 +0330
+diff -Naur a/kernel/throne_tracker.h b/kernel/throne_tracker.h
+--- a/kernel/throne_tracker.h	2025-07-11 21:17:25.382722257 +0330
++++ b/kernel/throne_tracker.h	2025-07-13 03:14:56.962354973 +0330
 @@ -5,7 +5,7 @@
  
  void ksu_throne_tracker_exit();
