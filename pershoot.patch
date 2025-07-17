@@ -573,7 +573,7 @@ diff -Naur b/kernel/ksud.h bp/kernel/ksud.h
  #endif
 diff -Naur b/kernel/sucompat.c bp/kernel/sucompat.c
 --- b/kernel/sucompat.c	2025-07-16 21:19:29.334134072 +0330
-+++ bp/kernel/sucompat.c	2025-07-17 17:17:14.882177458 +0330
++++ bp/kernel/sucompat.c	2025-07-17 18:45:52.638999838 +0330
 @@ -56,34 +56,64 @@
  	return userspace_stack_buffer(ksud_path, sizeof(ksud_path));
  }
@@ -656,7 +656,7 @@ diff -Naur b/kernel/sucompat.c bp/kernel/sucompat.c
  }
  
  #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0) && defined(CONFIG_KSU_SUSFS_SUS_SU)
-@@ -113,45 +143,18 @@
+@@ -113,45 +143,19 @@
  	}
  #endif
  
@@ -666,7 +666,8 @@ diff -Naur b/kernel/sucompat.c bp/kernel/sucompat.c
 -	}
 -#endif
 -	if (unlikely(!filename_user)) {
--		return 0;
++	if (!is_su_allowed((const void *)filename_user)){
+ 		return 0;
 -	}
 -#ifdef CONFIG_KSU_SUSFS_SUS_SU
 -	char path[sizeof(su)] = {0};
@@ -697,10 +698,9 @@ diff -Naur b/kernel/sucompat.c bp/kernel/sucompat.c
 -#endif
 -
 -	return 0;
-+    if (!is_su_allowed((const void *)filename_user))
-+    	return 0;
-+    	
-+	return ksu_sucompat_user_common(filename_user, "newfstatat", false);
++    }
++    
++	return ksu_sucompat_user_common(filename_user, "newfstatat", false);    	
  }
  
 +int ksu_handle_execveat(int *fd, struct filename **filename_ptr, void *argv,
@@ -712,7 +712,7 @@ diff -Naur b/kernel/sucompat.c bp/kernel/sucompat.c
  // the call from execve_handler_pre won't provided correct value for __never_use_argument, use them after fix execve_handler_pre, keeping them for consistence for manually patched code
  int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
  				 void *__never_use_argv, void *__never_use_envp,
-@@ -165,7 +168,7 @@
+@@ -165,7 +169,7 @@
  	}
  #endif
  
@@ -721,7 +721,7 @@ diff -Naur b/kernel/sucompat.c bp/kernel/sucompat.c
  		return 0;
  
  	filename = *filename_ptr;
-@@ -193,41 +196,20 @@
+@@ -193,41 +197,20 @@
  			       void *__never_use_argv, void *__never_use_envp,
  			       int *__never_use_flags)
  {
@@ -763,7 +763,7 @@ diff -Naur b/kernel/sucompat.c bp/kernel/sucompat.c
 -	return 0;
 +int __ksu_handle_devpts(struct inode *inode)
 +{
-+	retrun ksu_handle_devpts(inode);
++	return ksu_handle_devpts(inode);
  }
  
  int ksu_handle_devpts(struct inode *inode)
@@ -772,7 +772,7 @@ diff -Naur b/kernel/sucompat.c bp/kernel/sucompat.c
  #ifndef CONFIG_KSU_KPROBES_HOOK
  	if (!ksu_sucompat_non_kp) {
  		return 0;
-@@ -244,7 +226,7 @@
+@@ -244,7 +227,7 @@
  		return 0;
  	}
  
