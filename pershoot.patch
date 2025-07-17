@@ -43,7 +43,7 @@ diff -Naur b/kernel/Makefile bp/kernel/Makefile
  endif
 diff -Naur b/kernel/core_hook.c bp/kernel/core_hook.c
 --- b/kernel/core_hook.c	2025-07-16 21:19:29.330134072 +0330
-+++ bp/kernel/core_hook.c	2025-07-17 20:07:47.217934089 +0330
++++ bp/kernel/core_hook.c	2025-07-17 20:57:03.154334549 +0330
 @@ -7,6 +7,7 @@
  #include <linux/kallsyms.h>
  #include <linux/kernel.h>
@@ -266,7 +266,7 @@ diff -Naur b/kernel/core_hook.c bp/kernel/core_hook.c
  #endif
  
 +#ifdef CONFIG_COMPAT
-+extern bool ksu_is_compat __read_mostly = false;
++extern bool ksu_is_compat __read_mostly;
 +#endif
 +
 +LSM_HANDLER_TYPE ksu_bprm_check(struct linux_binprm *bprm)
@@ -386,6 +386,25 @@ diff -Naur b/kernel/kernel_compat.h bp/kernel/kernel_compat.h
 +}
  
  #endif
+diff -Naur b/kernel/ksu.c bp/kernel/ksu.c
+--- b/kernel/ksu.c	2025-07-16 21:19:29.330134072 +0330
++++ bp/kernel/ksu.c	2025-07-17 21:01:32.486334446 +0330
+@@ -28,13 +28,8 @@
+ extern int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
+ 				    void *argv, void *envp, int *flags);
+ 
+-int ksu_handle_execveat(int *fd, struct filename **filename_ptr, void *argv,
+-			void *envp, int *flags)
+-{
+-	ksu_handle_execveat_ksud(fd, filename_ptr, argv, envp, flags);
+-	return ksu_handle_execveat_sucompat(fd, filename_ptr, argv, envp,
+-					    flags);
+-}
++extern int ksu_handle_execveat(int *fd, struct filename **filename_ptr, void *argv,
++			void *envp, int *flags);
+ 
+ extern void ksu_sucompat_init();
+ extern void ksu_sucompat_exit();
 diff -Naur b/kernel/ksud.c bp/kernel/ksud.c
 --- b/kernel/ksud.c	2025-07-16 21:19:29.330134072 +0330
 +++ bp/kernel/ksud.c	2025-07-17 19:13:33.979399699 +0330
