@@ -43,7 +43,7 @@ diff -Naur b/kernel/Makefile bp/kernel/Makefile
  endif
 diff -Naur b/kernel/core_hook.c bp/kernel/core_hook.c
 --- b/kernel/core_hook.c	2025-07-16 21:19:29.330134072 +0330
-+++ bp/kernel/core_hook.c	2025-07-17 16:03:09.888382794 +0330
++++ bp/kernel/core_hook.c	2025-07-17 20:07:47.217934089 +0330
 @@ -7,6 +7,7 @@
  #include <linux/kallsyms.h>
  #include <linux/kernel.h>
@@ -266,7 +266,7 @@ diff -Naur b/kernel/core_hook.c bp/kernel/core_hook.c
  #endif
  
 +#ifdef CONFIG_COMPAT
-+bool ksu_is_compat __read_mostly = false;
++extern bool ksu_is_compat __read_mostly = false;
 +#endif
 +
 +LSM_HANDLER_TYPE ksu_bprm_check(struct linux_binprm *bprm)
