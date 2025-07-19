@@ -276,7 +276,7 @@ diff -Naur a/kernel/allowlist.c b/kernel/allowlist.c
  }
 diff -Naur a/kernel/apk_sign.c b/kernel/apk_sign.c
 --- a/kernel/apk_sign.c	2025-07-19 22:50:37.304057535 +0330
-+++ b/kernel/apk_sign.c	2025-07-20 00:27:08.780957285 +0330
++++ b/kernel/apk_sign.c	2025-07-20 01:05:52.129999866 +0330
 @@ -363,7 +363,7 @@
  
  #endif
@@ -286,16 +286,13 @@ diff -Naur a/kernel/apk_sign.c b/kernel/apk_sign.c
  {
  	int tries = 0;
  
-@@ -386,8 +386,12 @@
- 		path, expected_manager_size, expected_manager_hash);
- 
+@@ -388,6 +388,10 @@
  #ifdef CONFIG_KSU_DEBUG
--	return check_v2_signature(path, EXPECTED_MANAGER_SIZE, EXPECTED_MANAGER_HASH);
-+	return check_v2_signature(path, EXPECTED_MANAGER_SIZE, EXPECTED_MANAGER_HASH)
-+#else
+ 	return check_v2_signature(path, EXPECTED_MANAGER_SIZE, EXPECTED_MANAGER_HASH);
+ #else
 +#ifdef CONFIG_KSU_SUSFS
 +	return (check_v2_signature(path, expected_manager_hash, expected_manager_hash) || check_v2_signature(path, 384, "7e0c6d7278a3bb8e364e0fcba95afaf3666cf5ff3c245a3b63c8833bd0445cc4")); // 5ec1cff
- #else
++#else
  	return check_v2_signature(path, expected_manager_size, expected_manager_hash);
  #endif
 +#endif
