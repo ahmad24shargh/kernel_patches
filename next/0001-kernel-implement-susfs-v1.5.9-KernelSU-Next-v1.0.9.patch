@@ -1,6 +1,6 @@
 diff -Naur a/kernel/Kconfig b/kernel/Kconfig
---- a/kernel/Kconfig	2025-07-19 22:50:37.744057535 +0330
-+++ b/kernel/Kconfig	2025-07-19 23:16:39.920056939 +0330
+--- a/kernel/Kconfig	2025-07-21 00:27:01.597057597 +0330
++++ b/kernel/Kconfig	2025-07-21 00:28:03.581057573 +0330
 @@ -40,4 +40,139 @@
  	  Disabling this is mostly only useful for kernel 4.1 and older.
  	  Make sure to implement manual hooks on security/security.c.
@@ -142,8 +142,8 @@ diff -Naur a/kernel/Kconfig b/kernel/Kconfig
 +
  endmenu
 diff -Naur a/kernel/Makefile b/kernel/Makefile
---- a/kernel/Makefile	2025-07-19 22:50:38.196057534 +0330
-+++ b/kernel/Makefile	2025-07-19 23:16:39.920056939 +0330
+--- a/kernel/Makefile	2025-07-21 00:27:02.053057597 +0330
++++ b/kernel/Makefile	2025-07-21 00:28:03.581057573 +0330
 @@ -116,4 +116,81 @@
  ccflags-y += -Wno-implicit-function-declaration -Wno-strict-prototypes -Wno-int-conversion -Wno-gcc-compat
  ccflags-y += -Wno-declaration-after-statement -Wno-unused-function
@@ -227,8 +227,8 @@ diff -Naur a/kernel/Makefile b/kernel/Makefile
 +endif
  # Keep a new line here!! Because someone may append config
 diff -Naur a/kernel/allowlist.c b/kernel/allowlist.c
---- a/kernel/allowlist.c	2025-07-19 22:50:37.200057535 +0330
-+++ b/kernel/allowlist.c	2025-07-19 23:16:39.924056939 +0330
+--- a/kernel/allowlist.c	2025-07-21 00:27:01.081057597 +0330
++++ b/kernel/allowlist.c	2025-07-21 00:28:03.581057573 +0330
 @@ -95,7 +95,7 @@
  static struct work_struct ksu_save_work;
  static struct work_struct ksu_load_work;
@@ -275,8 +275,8 @@ diff -Naur a/kernel/allowlist.c b/kernel/allowlist.c
  	return ksu_queue_work(&ksu_save_work);
  }
 diff -Naur a/kernel/apk_sign.c b/kernel/apk_sign.c
---- a/kernel/apk_sign.c	2025-07-19 22:50:37.304057535 +0330
-+++ b/kernel/apk_sign.c	2025-07-20 01:05:52.129999866 +0330
+--- a/kernel/apk_sign.c	2025-07-21 00:27:01.213057597 +0330
++++ b/kernel/apk_sign.c	2025-07-21 00:28:03.585057573 +0330
 @@ -363,7 +363,7 @@
  
  #endif
@@ -298,8 +298,8 @@ diff -Naur a/kernel/apk_sign.c b/kernel/apk_sign.c
 +#endif
  }
 diff -Naur a/kernel/apk_sign.h b/kernel/apk_sign.h
---- a/kernel/apk_sign.h	2025-07-19 22:50:37.356057535 +0330
-+++ b/kernel/apk_sign.h	2025-07-19 23:16:39.924056939 +0330
+--- a/kernel/apk_sign.h	2025-07-21 00:27:01.281057597 +0330
++++ b/kernel/apk_sign.h	2025-07-21 00:28:03.585057573 +0330
 @@ -3,6 +3,6 @@
  
  #include <linux/types.h>
@@ -309,8 +309,8 @@ diff -Naur a/kernel/apk_sign.h b/kernel/apk_sign.h
  
  #endif
 diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
---- a/kernel/core_hook.c	2025-07-19 22:50:37.496057535 +0330
-+++ b/kernel/core_hook.c	2025-07-19 23:16:39.928056939 +0330
+--- a/kernel/core_hook.c	2025-07-21 00:27:01.397057597 +0330
++++ b/kernel/core_hook.c	2025-07-21 00:28:03.585057573 +0330
 @@ -35,6 +35,10 @@
  #include <linux/vmalloc.h>
  #endif
@@ -1061,8 +1061,8 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  }
  
 diff -Naur a/kernel/kernel_compat.c b/kernel/kernel_compat.c
---- a/kernel/kernel_compat.c	2025-07-19 22:50:37.792057535 +0330
-+++ b/kernel/kernel_compat.c	2025-07-19 23:16:39.928056939 +0330
+--- a/kernel/kernel_compat.c	2025-07-21 00:27:01.649057597 +0330
++++ b/kernel/kernel_compat.c	2025-07-21 00:28:03.585057573 +0330
 @@ -76,6 +76,16 @@
  	task_unlock(current);
  }
@@ -1097,8 +1097,8 @@ diff -Naur a/kernel/kernel_compat.c b/kernel/kernel_compat.c
  				   long count)
  {
 diff -Naur a/kernel/kernel_compat.h b/kernel/kernel_compat.h
---- a/kernel/kernel_compat.h	2025-07-19 22:50:37.844057535 +0330
-+++ b/kernel/kernel_compat.h	2025-07-19 23:16:39.928056939 +0330
+--- a/kernel/kernel_compat.h	2025-07-21 00:27:01.701057597 +0330
++++ b/kernel/kernel_compat.h	2025-07-21 00:28:03.585057573 +0330
 @@ -32,6 +32,7 @@
  #endif
  
@@ -1108,8 +1108,8 @@ diff -Naur a/kernel/kernel_compat.h b/kernel/kernel_compat.h
  					 umode_t mode);
  extern ssize_t ksu_kernel_read_compat(struct file *p, void *buf, size_t count,
 diff -Naur a/kernel/ksu.c b/kernel/ksu.c
---- a/kernel/ksu.c	2025-07-19 22:50:37.948057535 +0330
-+++ b/kernel/ksu.c	2025-07-19 23:16:39.928056939 +0330
+--- a/kernel/ksu.c	2025-07-21 00:27:01.825057597 +0330
++++ b/kernel/ksu.c	2025-07-21 00:28:03.585057573 +0330
 @@ -11,6 +11,10 @@
  #include "ksu.h"
  #include "throne_tracker.h"
@@ -1162,19 +1162,19 @@ diff -Naur a/kernel/ksu.c b/kernel/ksu.c
  MODULE_LICENSE("GPL");
  MODULE_AUTHOR("weishu");
 diff -Naur a/kernel/ksud.c b/kernel/ksud.c
---- a/kernel/ksud.c	2025-07-19 22:50:38.040057534 +0330
-+++ b/kernel/ksud.c	2025-07-19 23:16:39.928056939 +0330
-@@ -64,6 +64,9 @@
- bool ksu_execveat_hook __read_mostly = true;
+--- a/kernel/ksud.c	2025-07-21 00:27:01.917057597 +0330
++++ b/kernel/ksud.c	2025-07-21 00:39:20.881057315 +0330
+@@ -64,21 +64,25 @@
  bool ksu_input_hook __read_mostly = true;
+ #endif
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_SU
 +bool susfs_is_sus_su_ready = false;
 +#endif // #ifdef CONFIG_KSU_SUSFS_SUS_SU
- 
++
  u32 ksu_devpts_sid;
  
-@@ -71,15 +74,15 @@
+ #ifdef CONFIG_COMPAT
  bool ksu_is_compat __read_mostly = false;
  #endif
  
@@ -1193,7 +1193,7 @@ diff -Naur a/kernel/ksud.c b/kernel/ksud.c
  	ksu_load_allow_list();
  	// sanity check, this may influence the performance
  	stop_input_hook();
-@@ -203,7 +206,7 @@
+@@ -202,7 +206,7 @@
  					first_arg);
  				if (!strcmp(first_arg, "second_stage")) {
  					pr_info("/system/bin/init second_stage executed\n");
@@ -1202,7 +1202,7 @@ diff -Naur a/kernel/ksud.c b/kernel/ksud.c
  					init_second_stage_executed = true;
  					ksu_android_ns_fs_check();
  				}
-@@ -227,7 +230,7 @@
+@@ -226,7 +230,7 @@
  				pr_info("/init first arg: %s\n", first_arg);
  				if (!strcmp(first_arg, "--second-stage")) {
  					pr_info("/init second_stage executed\n");
@@ -1211,7 +1211,7 @@ diff -Naur a/kernel/ksud.c b/kernel/ksud.c
  					init_second_stage_executed = true;
  					ksu_android_ns_fs_check();
  				}
-@@ -264,7 +267,7 @@
+@@ -263,7 +267,7 @@
  					    (!strcmp(env_value, "1") ||
  					     !strcmp(env_value, "true"))) {
  						pr_info("/init second_stage executed\n");
@@ -1220,7 +1220,7 @@ diff -Naur a/kernel/ksud.c b/kernel/ksud.c
  						init_second_stage_executed =
  							true;
  						ksu_android_ns_fs_check();
-@@ -279,7 +282,7 @@
+@@ -278,7 +282,7 @@
  		first_app_process = false;
  		pr_info("exec app_process, /data prepared, second_stage: %d\n",
  			init_second_stage_executed);
@@ -1229,7 +1229,7 @@ diff -Naur a/kernel/ksud.c b/kernel/ksud.c
  		stop_execve_hook();
  	}
  
-@@ -677,6 +680,10 @@
+@@ -678,6 +682,10 @@
  	ksu_execveat_hook = false;
  	pr_info("stop execve_hook\n");
  #endif
@@ -1241,8 +1241,8 @@ diff -Naur a/kernel/ksud.c b/kernel/ksud.c
  
  static void stop_input_hook()
 diff -Naur a/kernel/ksud.h b/kernel/ksud.h
---- a/kernel/ksud.h	2025-07-19 22:50:38.092057534 +0330
-+++ b/kernel/ksud.h	2025-07-19 23:16:39.928056939 +0330
+--- a/kernel/ksud.h	2025-07-21 00:27:01.961057597 +0330
++++ b/kernel/ksud.h	2025-07-21 00:28:03.589057573 +0330
 @@ -5,7 +5,7 @@
  
  #define KSUD_PATH "/data/adb/ksud"
@@ -1253,8 +1253,8 @@ diff -Naur a/kernel/ksud.h b/kernel/ksud.h
  bool ksu_is_safe_mode(void);
  
 diff -Naur a/kernel/manager.h b/kernel/manager.h
---- a/kernel/manager.h	2025-07-19 22:50:38.240057534 +0330
-+++ b/kernel/manager.h	2025-07-19 23:16:39.928056939 +0330
+--- a/kernel/manager.h	2025-07-21 00:27:02.101057597 +0330
++++ b/kernel/manager.h	2025-07-21 00:28:03.589057573 +0330
 @@ -13,7 +13,7 @@
  	return ksu_manager_uid != KSU_INVALID_UID;
  }
@@ -1265,8 +1265,8 @@ diff -Naur a/kernel/manager.h b/kernel/manager.h
  	return unlikely(ksu_manager_uid == current_uid().val);
  }
 diff -Naur a/kernel/selinux/rules.c b/kernel/selinux/rules.c
---- a/kernel/selinux/rules.c	2025-07-19 22:50:36.952057535 +0330
-+++ b/kernel/selinux/rules.c	2025-07-19 23:16:39.932056939 +0330
+--- a/kernel/selinux/rules.c	2025-07-21 00:27:00.825057597 +0330
++++ b/kernel/selinux/rules.c	2025-07-21 00:28:03.589057573 +0330
 @@ -38,11 +38,11 @@
  
  static DEFINE_MUTEX(ksu_rules);
@@ -1313,8 +1313,8 @@ diff -Naur a/kernel/selinux/rules.c b/kernel/selinux/rules.c
  	}
  	
 diff -Naur a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
---- a/kernel/selinux/selinux.c	2025-07-19 22:50:37.004057535 +0330
-+++ b/kernel/selinux/selinux.c	2025-07-19 23:16:39.932056939 +0330
+--- a/kernel/selinux/selinux.c	2025-07-21 00:27:00.877057597 +0330
++++ b/kernel/selinux/selinux.c	2025-07-21 00:28:03.589057573 +0330
 @@ -8,6 +8,14 @@
  
  #define KERNEL_SU_DOMAIN "u:r:su:s0"
@@ -1460,8 +1460,8 @@ diff -Naur a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
  
  u32 ksu_get_devpts_sid()
 diff -Naur a/kernel/selinux/selinux.h b/kernel/selinux/selinux.h
---- a/kernel/selinux/selinux.h	2025-07-19 22:50:37.056057535 +0330
-+++ b/kernel/selinux/selinux.h	2025-07-19 23:16:39.932056939 +0330
+--- a/kernel/selinux/selinux.h	2025-07-21 00:27:00.925057597 +0330
++++ b/kernel/selinux/selinux.h	2025-07-21 00:28:03.589057573 +0330
 @@ -8,17 +8,29 @@
  #define KSU_COMPAT_USE_SELINUX_STATE
  #endif
@@ -1499,8 +1499,8 @@ diff -Naur a/kernel/selinux/selinux.h b/kernel/selinux/selinux.h
  u32 ksu_get_devpts_sid();
  
 diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
---- a/kernel/sucompat.c	2025-07-19 22:50:38.340057534 +0330
-+++ b/kernel/sucompat.c	2025-07-19 23:16:39.932056939 +0330
+--- a/kernel/sucompat.c	2025-07-21 00:27:02.193057597 +0330
++++ b/kernel/sucompat.c	2025-07-21 00:28:03.589057573 +0330
 @@ -13,6 +13,9 @@
  #else
  #include <linux/sched.h>
@@ -1719,8 +1719,8 @@ diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
 +#endif // #ifdef CONFIG_KSU_SUSFS_SUS_SU
 +
 diff -Naur a/kernel/throne_tracker.c b/kernel/throne_tracker.c
---- a/kernel/throne_tracker.c	2025-07-19 22:50:38.384057534 +0330
-+++ b/kernel/throne_tracker.c	2025-07-19 23:16:39.932056939 +0330
+--- a/kernel/throne_tracker.c	2025-07-21 00:27:02.241057597 +0330
++++ b/kernel/throne_tracker.c	2025-07-21 00:28:03.589057573 +0330
 @@ -192,7 +192,7 @@
  				}
  			}
@@ -1740,8 +1740,8 @@ diff -Naur a/kernel/throne_tracker.c b/kernel/throne_tracker.c
  	struct file *fp;
  	int tries = 0;
 diff -Naur a/kernel/throne_tracker.h b/kernel/throne_tracker.h
---- a/kernel/throne_tracker.h	2025-07-19 22:50:38.444057534 +0330
-+++ b/kernel/throne_tracker.h	2025-07-19 23:16:39.932056939 +0330
+--- a/kernel/throne_tracker.h	2025-07-21 00:27:02.293057597 +0330
++++ b/kernel/throne_tracker.h	2025-07-21 00:28:03.589057573 +0330
 @@ -5,7 +5,7 @@
  
  void ksu_throne_tracker_exit();
