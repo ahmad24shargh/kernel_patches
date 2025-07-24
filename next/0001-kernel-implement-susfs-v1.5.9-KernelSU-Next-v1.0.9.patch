@@ -1,6 +1,6 @@
 diff -Naur a/kernel/Kconfig b/kernel/Kconfig
---- a/kernel/Kconfig	2025-07-23 23:07:33.402414117 +0330
-+++ b/kernel/Kconfig	2025-07-23 23:08:18.006414100 +0330
+--- a/kernel/Kconfig	2025-07-24 14:53:48.224999677 +0330
++++ b/kernel/Kconfig	2025-07-24 14:54:21.724999664 +0330
 @@ -40,4 +40,139 @@
  	  Disabling this is mostly only useful for kernel 4.1 and older.
  	  Make sure to implement manual hooks on security/security.c.
@@ -142,8 +142,8 @@ diff -Naur a/kernel/Kconfig b/kernel/Kconfig
 +
  endmenu
 diff -Naur a/kernel/Makefile b/kernel/Makefile
---- a/kernel/Makefile	2025-07-23 23:07:33.842414117 +0330
-+++ b/kernel/Makefile	2025-07-23 23:08:18.006414100 +0330
+--- a/kernel/Makefile	2025-07-24 14:53:48.724999677 +0330
++++ b/kernel/Makefile	2025-07-24 14:54:21.724999664 +0330
 @@ -116,4 +116,81 @@
  ccflags-y += -Wno-implicit-function-declaration -Wno-strict-prototypes -Wno-int-conversion -Wno-gcc-compat
  ccflags-y += -Wno-declaration-after-statement -Wno-unused-function
@@ -227,8 +227,8 @@ diff -Naur a/kernel/Makefile b/kernel/Makefile
 +endif
  # Keep a new line here!! Because someone may append config
 diff -Naur a/kernel/allowlist.c b/kernel/allowlist.c
---- a/kernel/allowlist.c	2025-07-23 23:07:32.842414117 +0330
-+++ b/kernel/allowlist.c	2025-07-23 23:08:18.006414100 +0330
+--- a/kernel/allowlist.c	2025-07-24 14:53:47.632999677 +0330
++++ b/kernel/allowlist.c	2025-07-24 14:54:21.724999664 +0330
 @@ -95,7 +95,7 @@
  static struct work_struct ksu_save_work;
  static struct work_struct ksu_load_work;
@@ -275,8 +275,8 @@ diff -Naur a/kernel/allowlist.c b/kernel/allowlist.c
  	return ksu_queue_work(&ksu_save_work);
  }
 diff -Naur a/kernel/apk_sign.c b/kernel/apk_sign.c
---- a/kernel/apk_sign.c	2025-07-23 23:07:32.946414117 +0330
-+++ b/kernel/apk_sign.c	2025-07-23 23:08:18.006414100 +0330
+--- a/kernel/apk_sign.c	2025-07-24 14:53:47.776999677 +0330
++++ b/kernel/apk_sign.c	2025-07-24 14:54:21.724999664 +0330
 @@ -363,7 +363,7 @@
  
  #endif
@@ -298,8 +298,8 @@ diff -Naur a/kernel/apk_sign.c b/kernel/apk_sign.c
 +#endif
  }
 diff -Naur a/kernel/apk_sign.h b/kernel/apk_sign.h
---- a/kernel/apk_sign.h	2025-07-23 23:07:33.010414117 +0330
-+++ b/kernel/apk_sign.h	2025-07-23 23:08:18.006414100 +0330
+--- a/kernel/apk_sign.h	2025-07-24 14:53:47.832999677 +0330
++++ b/kernel/apk_sign.h	2025-07-24 14:54:21.728999664 +0330
 @@ -3,6 +3,6 @@
  
  #include <linux/types.h>
@@ -309,8 +309,8 @@ diff -Naur a/kernel/apk_sign.h b/kernel/apk_sign.h
  
  #endif
 diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
---- a/kernel/core_hook.c	2025-07-23 23:07:33.130414117 +0330
-+++ b/kernel/core_hook.c	2025-07-23 23:08:18.010414100 +0330
+--- a/kernel/core_hook.c	2025-07-24 14:53:47.956999677 +0330
++++ b/kernel/core_hook.c	2025-07-24 14:54:21.732999664 +0330
 @@ -35,6 +35,10 @@
  #include <linux/vmalloc.h>
  #endif
@@ -448,7 +448,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  
  	return 0;
  }
-@@ -302,7 +380,7 @@
+@@ -303,7 +381,7 @@
  	}
  
  	bool from_root = 0 == current_uid().val;
@@ -457,7 +457,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  
  #ifdef CONFIG_KSU_KPROBES_HOOK
  	if (!from_root && !from_manager 
-@@ -334,7 +412,7 @@
+@@ -335,7 +413,7 @@
  	if (arg2 == CMD_GRANT_ROOT) {
  		if (is_allow_su()) {
  			pr_info("allow root for: %d\n", current_uid().val);
@@ -466,7 +466,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  			if (copy_to_user(result, &reply_ok, sizeof(reply_ok))) {
  				pr_err("grant_root: prctl reply error\n");
  			}
-@@ -389,10 +467,13 @@
+@@ -390,10 +468,13 @@
  		switch (arg3) {
  		case EVENT_POST_FS_DATA: {
  			static bool post_fs_data_lock = false;
@@ -481,7 +481,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  			}
  			break;
  		}
-@@ -420,7 +501,7 @@
+@@ -421,7 +502,7 @@
  		if (!from_root) {
  			return 0;
  		}
@@ -490,7 +490,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  			if (copy_to_user(result, &reply_ok, sizeof(reply_ok))) {
  				pr_err("sepolicy: prctl reply error\n");
  			}
-@@ -493,6 +574,12 @@
+@@ -494,6 +575,12 @@
  		}
  
  		if (enabled) {
@@ -503,7 +503,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  			ksu_sucompat_init();
  		} else {
  			ksu_sucompat_exit();
-@@ -507,6 +594,368 @@
+@@ -508,6 +595,368 @@
  	}
  #endif
  
@@ -872,7 +872,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  	// all other cmds are for 'root manager'
  	if (!from_manager) {
  		return 0;
-@@ -612,11 +1061,15 @@
+@@ -613,11 +1062,15 @@
  		return false;
  	}
  
@@ -888,7 +888,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  }
  
  static int ksu_umount_mnt(struct path *path, int flags)
-@@ -629,7 +1082,11 @@
+@@ -630,7 +1083,11 @@
  #endif
  }
  
@@ -901,7 +901,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  {
  	struct path path;
  	int err = kern_path(mnt, 0, &path);
-@@ -648,6 +1105,12 @@
+@@ -649,6 +1106,12 @@
  		path_put(&path);
  		return;
  	}
@@ -914,7 +914,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  
  	err = ksu_umount_mnt(&path, flags);
  	if (err) {
-@@ -655,6 +1118,31 @@
+@@ -656,6 +1119,31 @@
  	}
  }
  
@@ -946,7 +946,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  int ksu_handle_setuid(struct cred *new, const struct cred *old)
  {
  	// this hook is used for umounting overlayfs for some uid, if there isn't any module mounted, just ignore it!
-@@ -674,6 +1162,55 @@
+@@ -675,6 +1163,55 @@
  		return 0;
  	}
  
@@ -1002,7 +1002,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  	if (!is_appuid(new_uid) || is_unsupported_uid(new_uid.val)) {
  		// pr_info("handle setuid ignore non application or isolated uid: %d\n", new_uid.val);
  		return 0;
-@@ -683,7 +1220,23 @@
+@@ -684,7 +1221,23 @@
  		// pr_info("handle setuid ignore allowed application: %d\n", new_uid.val);
  		return 0;
  	}
@@ -1026,7 +1026,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  	if (!ksu_uid_should_umount(new_uid.val)) {
  		return 0;
  	} else {
-@@ -692,10 +1245,12 @@
+@@ -693,10 +1246,12 @@
  #endif
  	}
  
@@ -1040,7 +1040,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  	if (!is_zygote_child) {
  		pr_info("handle umount ignore non zygote child: %d\n",
  			current->pid);
-@@ -706,27 +1261,31 @@
+@@ -707,27 +1262,31 @@
  	pr_info("handle umount for uid: %d, pid: %d\n", new_uid.val,
  		current->pid);
  #endif
@@ -1086,8 +1086,8 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  }
  
 diff -Naur a/kernel/kernel_compat.c b/kernel/kernel_compat.c
---- a/kernel/kernel_compat.c	2025-07-23 23:07:33.450414117 +0330
-+++ b/kernel/kernel_compat.c	2025-07-23 23:08:18.010414100 +0330
+--- a/kernel/kernel_compat.c	2025-07-24 14:53:48.280999677 +0330
++++ b/kernel/kernel_compat.c	2025-07-24 14:54:21.732999664 +0330
 @@ -76,6 +76,16 @@
  	task_unlock(current);
  }
@@ -1122,8 +1122,8 @@ diff -Naur a/kernel/kernel_compat.c b/kernel/kernel_compat.c
  				   long count)
  {
 diff -Naur a/kernel/kernel_compat.h b/kernel/kernel_compat.h
---- a/kernel/kernel_compat.h	2025-07-23 23:07:33.498414117 +0330
-+++ b/kernel/kernel_compat.h	2025-07-23 23:08:18.010414100 +0330
+--- a/kernel/kernel_compat.h	2025-07-24 14:53:48.332999677 +0330
++++ b/kernel/kernel_compat.h	2025-07-24 14:54:21.732999664 +0330
 @@ -32,6 +32,7 @@
  #endif
  
@@ -1133,8 +1133,8 @@ diff -Naur a/kernel/kernel_compat.h b/kernel/kernel_compat.h
  					 umode_t mode);
  extern ssize_t ksu_kernel_read_compat(struct file *p, void *buf, size_t count,
 diff -Naur a/kernel/ksu.c b/kernel/ksu.c
---- a/kernel/ksu.c	2025-07-23 23:07:33.598414117 +0330
-+++ b/kernel/ksu.c	2025-07-23 23:08:18.014414100 +0330
+--- a/kernel/ksu.c	2025-07-24 14:53:48.440999677 +0330
++++ b/kernel/ksu.c	2025-07-24 14:54:21.732999664 +0330
 @@ -11,6 +11,10 @@
  #include "ksu.h"
  #include "throne_tracker.h"
@@ -1187,8 +1187,8 @@ diff -Naur a/kernel/ksu.c b/kernel/ksu.c
  MODULE_LICENSE("GPL");
  MODULE_AUTHOR("weishu");
 diff -Naur a/kernel/ksud.c b/kernel/ksud.c
---- a/kernel/ksud.c	2025-07-23 23:07:33.698414117 +0330
-+++ b/kernel/ksud.c	2025-07-23 23:08:18.014414100 +0330
+--- a/kernel/ksud.c	2025-07-24 14:53:48.568999677 +0330
++++ b/kernel/ksud.c	2025-07-24 14:54:21.732999664 +0330
 @@ -64,21 +64,25 @@
  bool ksu_input_hook __read_mostly = true;
  #endif
@@ -1266,8 +1266,8 @@ diff -Naur a/kernel/ksud.c b/kernel/ksud.c
  
  static void stop_input_hook()
 diff -Naur a/kernel/ksud.h b/kernel/ksud.h
---- a/kernel/ksud.h	2025-07-23 23:07:33.746414117 +0330
-+++ b/kernel/ksud.h	2025-07-23 23:08:18.014414100 +0330
+--- a/kernel/ksud.h	2025-07-24 14:53:48.620999677 +0330
++++ b/kernel/ksud.h	2025-07-24 14:54:21.732999664 +0330
 @@ -5,7 +5,7 @@
  
  #define KSUD_PATH "/data/adb/ksud"
@@ -1278,8 +1278,8 @@ diff -Naur a/kernel/ksud.h b/kernel/ksud.h
  bool ksu_is_safe_mode(void);
  
 diff -Naur a/kernel/manager.h b/kernel/manager.h
---- a/kernel/manager.h	2025-07-23 23:07:33.894414117 +0330
-+++ b/kernel/manager.h	2025-07-23 23:08:18.014414100 +0330
+--- a/kernel/manager.h	2025-07-24 14:53:48.776999677 +0330
++++ b/kernel/manager.h	2025-07-24 14:54:21.732999664 +0330
 @@ -13,7 +13,7 @@
  	return ksu_manager_uid != KSU_INVALID_UID;
  }
@@ -1290,8 +1290,8 @@ diff -Naur a/kernel/manager.h b/kernel/manager.h
  	return unlikely(ksu_manager_uid == current_uid().val);
  }
 diff -Naur a/kernel/selinux/rules.c b/kernel/selinux/rules.c
---- a/kernel/selinux/rules.c	2025-07-23 23:07:32.594414118 +0330
-+++ b/kernel/selinux/rules.c	2025-07-23 23:08:18.014414100 +0330
+--- a/kernel/selinux/rules.c	2025-07-24 14:53:47.348999677 +0330
++++ b/kernel/selinux/rules.c	2025-07-24 14:54:21.736999664 +0330
 @@ -38,11 +38,11 @@
  
  static DEFINE_MUTEX(ksu_rules);
@@ -1338,8 +1338,8 @@ diff -Naur a/kernel/selinux/rules.c b/kernel/selinux/rules.c
  	}
  	
 diff -Naur a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
---- a/kernel/selinux/selinux.c	2025-07-23 23:07:32.646414118 +0330
-+++ b/kernel/selinux/selinux.c	2025-07-23 23:08:18.014414100 +0330
+--- a/kernel/selinux/selinux.c	2025-07-24 14:53:47.412999677 +0330
++++ b/kernel/selinux/selinux.c	2025-07-24 14:54:21.736999664 +0330
 @@ -8,6 +8,14 @@
  
  #define KERNEL_SU_DOMAIN "u:r:su:s0"
@@ -1485,8 +1485,8 @@ diff -Naur a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
  
  u32 ksu_get_devpts_sid()
 diff -Naur a/kernel/selinux/selinux.h b/kernel/selinux/selinux.h
---- a/kernel/selinux/selinux.h	2025-07-23 23:07:32.694414118 +0330
-+++ b/kernel/selinux/selinux.h	2025-07-23 23:08:18.014414100 +0330
+--- a/kernel/selinux/selinux.h	2025-07-24 14:53:47.464999677 +0330
++++ b/kernel/selinux/selinux.h	2025-07-24 14:54:21.736999664 +0330
 @@ -8,17 +8,29 @@
  #define KSU_COMPAT_USE_SELINUX_STATE
  #endif
@@ -1524,8 +1524,8 @@ diff -Naur a/kernel/selinux/selinux.h b/kernel/selinux/selinux.h
  u32 ksu_get_devpts_sid();
  
 diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
---- a/kernel/sucompat.c	2025-07-23 23:07:34.014414117 +0330
-+++ b/kernel/sucompat.c	2025-07-23 23:08:18.014414100 +0330
+--- a/kernel/sucompat.c	2025-07-24 14:53:48.896999677 +0330
++++ b/kernel/sucompat.c	2025-07-24 14:54:21.736999664 +0330
 @@ -13,6 +13,9 @@
  #else
  #include <linux/sched.h>
@@ -1744,8 +1744,8 @@ diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
 +#endif // #ifdef CONFIG_KSU_SUSFS_SUS_SU
 +
 diff -Naur a/kernel/throne_tracker.c b/kernel/throne_tracker.c
---- a/kernel/throne_tracker.c	2025-07-23 23:07:34.062414117 +0330
-+++ b/kernel/throne_tracker.c	2025-07-23 23:08:18.014414100 +0330
+--- a/kernel/throne_tracker.c	2025-07-24 14:53:48.948999677 +0330
++++ b/kernel/throne_tracker.c	2025-07-24 14:54:21.736999664 +0330
 @@ -192,7 +192,7 @@
  				}
  			}
@@ -1765,8 +1765,8 @@ diff -Naur a/kernel/throne_tracker.c b/kernel/throne_tracker.c
  	struct file *fp;
  	int tries = 0;
 diff -Naur a/kernel/throne_tracker.h b/kernel/throne_tracker.h
---- a/kernel/throne_tracker.h	2025-07-23 23:07:34.106414117 +0330
-+++ b/kernel/throne_tracker.h	2025-07-23 23:08:18.014414100 +0330
+--- a/kernel/throne_tracker.h	2025-07-24 14:53:49.000999677 +0330
++++ b/kernel/throne_tracker.h	2025-07-24 14:54:21.740999664 +0330
 @@ -5,7 +5,7 @@
  
  void ksu_throne_tracker_exit();
