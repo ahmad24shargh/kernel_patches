@@ -1525,7 +1525,7 @@ diff -Naur a/kernel/selinux/selinux.h b/kernel/selinux/selinux.h
  
 diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
 --- a/kernel/sucompat.c	2025-07-24 14:53:48.896999677 +0330
-+++ b/kernel/sucompat.c	2025-07-24 14:54:21.736999664 +0330
++++ b/kernel/sucompat.c	2025-07-28 00:41:46.483017122 +0330
 @@ -13,6 +13,9 @@
  #else
  #include <linux/sched.h>
@@ -1590,7 +1590,7 @@ diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
 +#endif
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_SU
-+	char path[sizeof(su)] = {0};
++	char path[sizeof(su) + 1] = {0};
 +#else
  	char path[sizeof(su) + 1];
  	memset(path, 0, sizeof(path));
@@ -1643,7 +1643,7 @@ diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
  	}
 -
 +#ifdef CONFIG_KSU_SUSFS_SUS_SU
-+	char path[sizeof(su)] = {0};
++	char path[sizeof(su) + 1] = {0};
 +#else
  	char path[sizeof(su) + 1];
  	memset(path, 0, sizeof(path));
@@ -1685,7 +1685,7 @@ diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
 -	const char su[] = SU_PATH;
 +	//const char su[] = SU_PATH;
 +#ifdef CONFIG_KSU_SUSFS_SUS_SU
-+	char path[sizeof(su)] = {0};
++	char path[sizeof(su) + 1] = {0};
 +#else
  	char path[sizeof(su) + 1];
 +#endif
