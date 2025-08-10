@@ -1,9 +1,9 @@
 diff -Naur a/kernel/Kconfig b/kernel/Kconfig
---- a/kernel/Kconfig	2025-07-24 14:53:48.224999677 +0330
-+++ b/kernel/Kconfig	2025-07-24 14:54:21.724999664 +0330
-@@ -40,4 +40,139 @@
- 	  Disabling this is mostly only useful for kernel 4.1 and older.
- 	  Make sure to implement manual hooks on security/security.c.
+--- a/kernel/Kconfig	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/Kconfig	2025-08-10 13:33:21.862498979 +0330
+@@ -47,4 +47,139 @@
+ 	help
+ 	  Enable KernelSU switch manager support.
  
 +menu "KernelSU - SUSFS"
 +config KSU_SUSFS
@@ -142,8 +142,8 @@ diff -Naur a/kernel/Kconfig b/kernel/Kconfig
 +
  endmenu
 diff -Naur a/kernel/Makefile b/kernel/Makefile
---- a/kernel/Makefile	2025-07-24 14:53:48.724999677 +0330
-+++ b/kernel/Makefile	2025-07-24 14:54:21.724999664 +0330
+--- a/kernel/Makefile	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/Makefile	2025-08-10 13:33:21.862498979 +0330
 @@ -116,4 +116,81 @@
  ccflags-y += -Wno-implicit-function-declaration -Wno-strict-prototypes -Wno-int-conversion -Wno-gcc-compat
  ccflags-y += -Wno-declaration-after-statement -Wno-unused-function
@@ -227,8 +227,8 @@ diff -Naur a/kernel/Makefile b/kernel/Makefile
 +endif
  # Keep a new line here!! Because someone may append config
 diff -Naur a/kernel/allowlist.c b/kernel/allowlist.c
---- a/kernel/allowlist.c	2025-07-24 14:53:47.632999677 +0330
-+++ b/kernel/allowlist.c	2025-07-24 14:54:21.724999664 +0330
+--- a/kernel/allowlist.c	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/allowlist.c	2025-08-10 13:33:21.862498979 +0330
 @@ -95,7 +95,7 @@
  static struct work_struct ksu_save_work;
  static struct work_struct ksu_load_work;
@@ -275,9 +275,9 @@ diff -Naur a/kernel/allowlist.c b/kernel/allowlist.c
  	return ksu_queue_work(&ksu_save_work);
  }
 diff -Naur a/kernel/apk_sign.c b/kernel/apk_sign.c
---- a/kernel/apk_sign.c	2025-07-24 14:53:47.776999677 +0330
-+++ b/kernel/apk_sign.c	2025-07-24 14:54:21.724999664 +0330
-@@ -363,7 +363,7 @@
+--- a/kernel/apk_sign.c	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/apk_sign.c	2025-08-10 13:38:30.350498861 +0330
+@@ -365,7 +365,7 @@
  
  #endif
  
@@ -286,20 +286,20 @@ diff -Naur a/kernel/apk_sign.c b/kernel/apk_sign.c
  {
  	int tries = 0;
  
-@@ -388,6 +388,10 @@
- #ifdef CONFIG_KSU_DEBUG
- 	return check_v2_signature(path, EXPECTED_MANAGER_SIZE, EXPECTED_MANAGER_HASH);
- #else
+@@ -386,6 +386,9 @@
+ 	// set debug info to print size and hash to kernel log
+ 	pr_info("%s: expected size: %u, expected hash: %s\n",
+ 		path, expected_manager_size, expected_manager_hash);
+-
 +#ifdef CONFIG_KSU_SUSFS
 +	return (check_v2_signature(path, expected_manager_hash, expected_manager_hash) || check_v2_signature(path, 384, "7e0c6d7278a3bb8e364e0fcba95afaf3666cf5ff3c245a3b63c8833bd0445cc4")); // 5ec1cff
 +#else
  	return check_v2_signature(path, expected_manager_size, expected_manager_hash);
- #endif
 +#endif
  }
 diff -Naur a/kernel/apk_sign.h b/kernel/apk_sign.h
---- a/kernel/apk_sign.h	2025-07-24 14:53:47.832999677 +0330
-+++ b/kernel/apk_sign.h	2025-07-24 14:54:21.728999664 +0330
+--- a/kernel/apk_sign.h	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/apk_sign.h	2025-08-10 13:33:21.866498979 +0330
 @@ -3,6 +3,6 @@
  
  #include <linux/types.h>
@@ -309,8 +309,8 @@ diff -Naur a/kernel/apk_sign.h b/kernel/apk_sign.h
  
  #endif
 diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
---- a/kernel/core_hook.c	2025-07-24 14:53:47.956999677 +0330
-+++ b/kernel/core_hook.c	2025-07-24 14:54:21.732999664 +0330
+--- a/kernel/core_hook.c	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/core_hook.c	2025-08-10 13:42:56.518498759 +0330
 @@ -35,6 +35,10 @@
  #include <linux/vmalloc.h>
  #endif
@@ -503,7 +503,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  			ksu_sucompat_init();
  		} else {
  			ksu_sucompat_exit();
-@@ -508,6 +595,368 @@
+@@ -508,6 +595,379 @@
  	}
  #endif
  
@@ -866,13 +866,24 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
 +			return 0;
 +		}
 +#endif // #ifdef CONFIG_KSU_SUSFS_SUS_SU
++        if (arg2 == CMD_SUSFS_ENABLE_AVC_LOG_SPOOFING) {
++			int error = 0;
++			if (arg3 != 0 && arg3 != 1) {
++				pr_err("susfs: CMD_SUSFS_ENABLE_AVC_LOG_SPOOFING -> arg3 can only be 0 or 1\n");
++				return 0;
++			}
++			susfs_set_avc_log_spoofing(arg3);
++			if (copy_to_user((void __user*)arg5, &error, sizeof(error)))
++				pr_info("susfs: copy_to_user() failed\n");
++			return 0;
++		}
 +	}
 +#endif //#ifdef CONFIG_KSU_SUSFS
 +
  	// all other cmds are for 'root manager'
  	if (!from_manager) {
  		return 0;
-@@ -613,11 +1062,15 @@
+@@ -613,11 +1073,15 @@
  		return false;
  	}
  
@@ -888,7 +899,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  }
  
  static int ksu_umount_mnt(struct path *path, int flags)
-@@ -630,7 +1083,11 @@
+@@ -630,7 +1094,11 @@
  #endif
  }
  
@@ -901,7 +912,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  {
  	struct path path;
  	int err = kern_path(mnt, 0, &path);
-@@ -649,6 +1106,12 @@
+@@ -649,6 +1117,12 @@
  		path_put(&path);
  		return;
  	}
@@ -914,7 +925,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  
  	err = ksu_umount_mnt(&path, flags);
  	if (err) {
-@@ -656,6 +1119,31 @@
+@@ -656,6 +1130,31 @@
  	}
  }
  
@@ -946,7 +957,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  int ksu_handle_setuid(struct cred *new, const struct cred *old)
  {
  	// this hook is used for umounting overlayfs for some uid, if there isn't any module mounted, just ignore it!
-@@ -675,6 +1163,55 @@
+@@ -675,6 +1174,55 @@
  		return 0;
  	}
  
@@ -1002,7 +1013,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  	if (!is_appuid(new_uid) || is_unsupported_uid(new_uid.val)) {
  		// pr_info("handle setuid ignore non application or isolated uid: %d\n", new_uid.val);
  		return 0;
-@@ -684,7 +1221,23 @@
+@@ -684,7 +1232,23 @@
  		// pr_info("handle setuid ignore allowed application: %d\n", new_uid.val);
  		return 0;
  	}
@@ -1026,7 +1037,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  	if (!ksu_uid_should_umount(new_uid.val)) {
  		return 0;
  	} else {
-@@ -693,10 +1246,12 @@
+@@ -693,10 +1257,12 @@
  #endif
  	}
  
@@ -1040,7 +1051,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  	if (!is_zygote_child) {
  		pr_info("handle umount ignore non zygote child: %d\n",
  			current->pid);
-@@ -707,27 +1262,31 @@
+@@ -707,27 +1273,31 @@
  	pr_info("handle umount for uid: %d, pid: %d\n", new_uid.val,
  		current->pid);
  #endif
@@ -1086,8 +1097,8 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  }
  
 diff -Naur a/kernel/kernel_compat.c b/kernel/kernel_compat.c
---- a/kernel/kernel_compat.c	2025-07-24 14:53:48.280999677 +0330
-+++ b/kernel/kernel_compat.c	2025-07-24 14:54:21.732999664 +0330
+--- a/kernel/kernel_compat.c	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/kernel_compat.c	2025-08-10 13:33:21.870498979 +0330
 @@ -76,6 +76,16 @@
  	task_unlock(current);
  }
@@ -1122,8 +1133,8 @@ diff -Naur a/kernel/kernel_compat.c b/kernel/kernel_compat.c
  				   long count)
  {
 diff -Naur a/kernel/kernel_compat.h b/kernel/kernel_compat.h
---- a/kernel/kernel_compat.h	2025-07-24 14:53:48.332999677 +0330
-+++ b/kernel/kernel_compat.h	2025-07-24 14:54:21.732999664 +0330
+--- a/kernel/kernel_compat.h	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/kernel_compat.h	2025-08-10 13:33:21.874498979 +0330
 @@ -32,6 +32,7 @@
  #endif
  
@@ -1133,8 +1144,8 @@ diff -Naur a/kernel/kernel_compat.h b/kernel/kernel_compat.h
  					 umode_t mode);
  extern ssize_t ksu_kernel_read_compat(struct file *p, void *buf, size_t count,
 diff -Naur a/kernel/ksu.c b/kernel/ksu.c
---- a/kernel/ksu.c	2025-07-24 14:53:48.440999677 +0330
-+++ b/kernel/ksu.c	2025-07-24 14:54:21.732999664 +0330
+--- a/kernel/ksu.c	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/ksu.c	2025-08-10 13:33:21.874498979 +0330
 @@ -11,6 +11,10 @@
  #include "ksu.h"
  #include "throne_tracker.h"
@@ -1187,8 +1198,8 @@ diff -Naur a/kernel/ksu.c b/kernel/ksu.c
  MODULE_LICENSE("GPL");
  MODULE_AUTHOR("weishu");
 diff -Naur a/kernel/ksud.c b/kernel/ksud.c
---- a/kernel/ksud.c	2025-07-24 14:53:48.568999677 +0330
-+++ b/kernel/ksud.c	2025-07-24 14:54:21.732999664 +0330
+--- a/kernel/ksud.c	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/ksud.c	2025-08-10 13:33:21.874498979 +0330
 @@ -64,21 +64,25 @@
  bool ksu_input_hook __read_mostly = true;
  #endif
@@ -1266,8 +1277,8 @@ diff -Naur a/kernel/ksud.c b/kernel/ksud.c
  
  static void stop_input_hook()
 diff -Naur a/kernel/ksud.h b/kernel/ksud.h
---- a/kernel/ksud.h	2025-07-24 14:53:48.620999677 +0330
-+++ b/kernel/ksud.h	2025-07-24 14:54:21.732999664 +0330
+--- a/kernel/ksud.h	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/ksud.h	2025-08-10 13:33:21.874498979 +0330
 @@ -5,7 +5,7 @@
  
  #define KSUD_PATH "/data/adb/ksud"
@@ -1278,8 +1289,8 @@ diff -Naur a/kernel/ksud.h b/kernel/ksud.h
  bool ksu_is_safe_mode(void);
  
 diff -Naur a/kernel/manager.h b/kernel/manager.h
---- a/kernel/manager.h	2025-07-24 14:53:48.776999677 +0330
-+++ b/kernel/manager.h	2025-07-24 14:54:21.732999664 +0330
+--- a/kernel/manager.h	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/manager.h	2025-08-10 13:33:21.874498979 +0330
 @@ -13,7 +13,7 @@
  	return ksu_manager_uid != KSU_INVALID_UID;
  }
@@ -1290,8 +1301,8 @@ diff -Naur a/kernel/manager.h b/kernel/manager.h
  	return unlikely(ksu_manager_uid == current_uid().val);
  }
 diff -Naur a/kernel/selinux/rules.c b/kernel/selinux/rules.c
---- a/kernel/selinux/rules.c	2025-07-24 14:53:47.348999677 +0330
-+++ b/kernel/selinux/rules.c	2025-07-24 14:54:21.736999664 +0330
+--- a/kernel/selinux/rules.c	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/selinux/rules.c	2025-08-10 13:45:57.302498690 +0330
 @@ -38,11 +38,11 @@
  
  static DEFINE_MUTEX(ksu_rules);
@@ -1306,7 +1317,7 @@ diff -Naur a/kernel/selinux/rules.c b/kernel/selinux/rules.c
  		pr_info("SELinux permissive or disabled, apply rules!\n");
  	}
  
-@@ -138,6 +138,14 @@
+@@ -138,6 +138,15 @@
  	// Allow system server kill su process
  	ksu_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "getpgid");
  	ksu_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "sigkill");
@@ -1314,6 +1325,7 @@ diff -Naur a/kernel/selinux/rules.c b/kernel/selinux/rules.c
 +#ifdef CONFIG_KSU_SUSFS
 +	// Allow umount in zygote process without installing zygisk
 +	ksu_allow(db, "zygote", "labeledfs", "filesystem", "unmount");
++	susfs_set_kernel_sid();
 +	susfs_set_init_sid();
 +	susfs_set_ksu_sid();
 +	susfs_set_zygote_sid();
@@ -1321,7 +1333,7 @@ diff -Naur a/kernel/selinux/rules.c b/kernel/selinux/rules.c
  
  	mutex_unlock(&ksu_rules);
  }
-@@ -228,13 +236,13 @@
+@@ -228,13 +237,13 @@
  	selinux_xfrm_notify_policyload();
  }
  
@@ -1338,24 +1350,26 @@ diff -Naur a/kernel/selinux/rules.c b/kernel/selinux/rules.c
  	}
  	
 diff -Naur a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
---- a/kernel/selinux/selinux.c	2025-07-24 14:53:47.412999677 +0330
-+++ b/kernel/selinux/selinux.c	2025-07-24 14:54:21.736999664 +0330
-@@ -8,6 +8,14 @@
+--- a/kernel/selinux/selinux.c	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/selinux/selinux.c	2025-08-10 13:50:06.770498595 +0330
+@@ -8,6 +8,16 @@
  
  #define KERNEL_SU_DOMAIN "u:r:su:s0"
  
 +#ifdef CONFIG_KSU_SUSFS
 +#define KERNEL_INIT_DOMAIN "u:r:init:s0"
 +#define KERNEL_ZYGOTE_DOMAIN "u:r:zygote:s0"
++#define KERNEL_KERNEL_DOMAIN "u:r:kernel:s0"
 +u32 susfs_ksu_sid = 0;
 +u32 susfs_init_sid = 0;
 +u32 susfs_zygote_sid = 0;
++u32 susfs_kernel_sid = 0;
 +#endif
 +
  static int transive_to_domain(const char *domain)
  {
  	struct cred *cred;
-@@ -37,7 +45,7 @@
+@@ -37,7 +47,7 @@
  	return error;
  }
  
@@ -1364,7 +1378,7 @@ diff -Naur a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
  {
  	if (transive_to_domain(domain)) {
  		pr_err("transive domain failed.\n");
-@@ -52,7 +60,7 @@
+@@ -52,7 +62,7 @@
  }*/
  }
  
@@ -1373,7 +1387,7 @@ diff -Naur a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
  {
  #ifdef CONFIG_SECURITY_SELINUX_DEVELOP
  #ifdef KSU_COMPAT_USE_SELINUX_STATE
-@@ -63,7 +71,7 @@
+@@ -63,7 +73,7 @@
  #endif
  }
  
@@ -1382,7 +1396,7 @@ diff -Naur a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
  {
  #ifdef CONFIG_SECURITY_SELINUX_DISABLE
  #ifdef KSU_COMPAT_USE_SELINUX_STATE
-@@ -99,7 +107,7 @@
+@@ -99,7 +109,7 @@
  }
  #endif
  
@@ -1391,7 +1405,7 @@ diff -Naur a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
  {
  	char *domain;
  	u32 seclen;
-@@ -113,7 +121,7 @@
+@@ -113,7 +123,7 @@
  	return result;
  }
  
@@ -1400,7 +1414,7 @@ diff -Naur a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
  {
  	struct task_security_struct *tsec = (struct task_security_struct *)sec;
  	if (!tsec) {
-@@ -131,6 +139,83 @@
+@@ -131,6 +141,88 @@
  	return result;
  }
  
@@ -1479,14 +1493,19 @@ diff -Naur a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
 +bool susfs_is_current_init_domain(void) {
 +	return unlikely(current_sid() == susfs_init_sid);
 +}
++
++void susfs_set_kernel_sid(void)
++{
++	susfs_set_sid(KERNEL_KERNEL_DOMAIN, &susfs_kernel_sid);
++}
 +#endif
 +
  #define DEVPTS_DOMAIN "u:object_r:ksu_file:s0"
  
  u32 ksu_get_devpts_sid()
 diff -Naur a/kernel/selinux/selinux.h b/kernel/selinux/selinux.h
---- a/kernel/selinux/selinux.h	2025-07-24 14:53:47.464999677 +0330
-+++ b/kernel/selinux/selinux.h	2025-07-24 14:54:21.736999664 +0330
+--- a/kernel/selinux/selinux.h	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/selinux/selinux.h	2025-08-10 13:33:21.874498979 +0330
 @@ -8,17 +8,29 @@
  #define KSU_COMPAT_USE_SELINUX_STATE
  #endif
@@ -1524,8 +1543,8 @@ diff -Naur a/kernel/selinux/selinux.h b/kernel/selinux/selinux.h
  u32 ksu_get_devpts_sid();
  
 diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
---- a/kernel/sucompat.c	2025-07-24 14:53:48.896999677 +0330
-+++ b/kernel/sucompat.c	2025-07-28 00:41:46.483017122 +0330
+--- a/kernel/sucompat.c	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/sucompat.c	2025-08-10 13:33:21.878498979 +0330
 @@ -13,6 +13,9 @@
  #else
  #include <linux/sched.h>
@@ -1744,8 +1763,8 @@ diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
 +#endif // #ifdef CONFIG_KSU_SUSFS_SUS_SU
 +
 diff -Naur a/kernel/throne_tracker.c b/kernel/throne_tracker.c
---- a/kernel/throne_tracker.c	2025-07-24 14:53:48.948999677 +0330
-+++ b/kernel/throne_tracker.c	2025-07-24 14:54:21.736999664 +0330
+--- a/kernel/throne_tracker.c	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/throne_tracker.c	2025-08-10 13:33:21.878498979 +0330
 @@ -192,7 +192,7 @@
  				}
  			}
@@ -1765,8 +1784,8 @@ diff -Naur a/kernel/throne_tracker.c b/kernel/throne_tracker.c
  	struct file *fp;
  	int tries = 0;
 diff -Naur a/kernel/throne_tracker.h b/kernel/throne_tracker.h
---- a/kernel/throne_tracker.h	2025-07-24 14:53:49.000999677 +0330
-+++ b/kernel/throne_tracker.h	2025-07-24 14:54:21.740999664 +0330
+--- a/kernel/throne_tracker.h	2025-08-10 09:58:42.000000000 +0330
++++ b/kernel/throne_tracker.h	2025-08-10 13:33:21.878498979 +0330
 @@ -5,7 +5,7 @@
  
  void ksu_throne_tracker_exit();
