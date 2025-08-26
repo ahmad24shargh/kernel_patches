@@ -1,6 +1,15 @@
 diff -Naur a/kernel/Kconfig b/kernel/Kconfig
 --- a/kernel/Kconfig	2025-08-26 00:00:01.024774583 +0330
-+++ b/kernel/Kconfig	2025-08-26 00:05:02.348774468 +0330
++++ b/kernel/Kconfig	2025-08-26 05:04:34.009150613 +0330
+@@ -13,7 +13,7 @@
+ 	bool "Use kprobes for kernelsu"
+ 	depends on KSU
+ 	depends on KPROBES
+-	default y
++	default n
+ 	help
+ 	  Disable if you use manual hooks.
+ 
 @@ -47,4 +47,139 @@
  	help
  	  Enable KernelSU switch manager support.
@@ -70,19 +79,19 @@ diff -Naur a/kernel/Kconfig b/kernel/Kconfig
 +      - Effective only on zygote spawned user app process.
 +
 +config KSU_SUSFS_TRY_UMOUNT
-+    bool "Enable to use ksu's ksu_try_umount"
++    bool "Enable to use ksu's try_umount"
 +    depends on KSU_SUSFS
 +    default y
 +    help
-+      - Allow using ksu_try_umount to umount other user-defined mount paths prior to ksu's default umount paths.
++      - Allow using try_umount to umount other user-defined mount paths prior to ksu's default umount paths.
 +      - Effective on all NO-root-access-granted processes.
 +
 +config KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
-+    bool "Enable to add bind mounts to ksu's ksu_try_umount automatically (experimental)"
++    bool "Enable to add bind mounts to ksu's try_umount automatically (experimental)"
 +    depends on KSU_SUSFS_TRY_UMOUNT
 +    default y
 +    help
-+      - Automatically add binded mounts to ksu's ksu_try_umount.
++      - Automatically add binded mounts to ksu's try_umount.
 +      - No susfs command is needed in userspace.
 +      - Only mount operation from process with ksu domain will be checked.
 +
@@ -128,7 +137,7 @@ diff -Naur a/kernel/Kconfig b/kernel/Kconfig
 +
 +config KSU_SUSFS_SUS_SU
 +    bool "Enable SUS-SU in runtime temporarily"
-+    depends on KSU_SUSFS && KPROBES && HAVE_KPROBES && KPROBE_EVENTS
++    depends on KSU_SUSFS && KPROBES && HAVE_KPROBES && KPROBE_EVENTS && KSU_KPROBES_HOOK
 +    default y
 +    help
 +      - Allow user to enable or disable core ksu kprobes hooks temporarily in runtime. There are 2 working modes for sus_su.
@@ -267,29 +276,21 @@ diff -Naur a/kernel/allowlist.c b/kernel/allowlist.c
  }
 diff -Naur a/kernel/apk_sign.c b/kernel/apk_sign.c
 --- a/kernel/apk_sign.c	2025-08-26 00:00:01.372774583 +0330
-+++ b/kernel/apk_sign.c	2025-08-26 00:16:59.544774194 +0330
-@@ -314,7 +314,6 @@
- module_param_cb(ksu_debug_manager_uid, &expected_size_ops,
- 		&ksu_debug_manager_uid, S_IRUSR | S_IWUSR);
- 
--#endif
- 
- #ifdef CONFIG_KSU_SWITCH_MANAGER
- 
-@@ -386,6 +385,9 @@
++++ b/kernel/apk_sign.c	2025-08-26 06:06:22.133149199 +0330
+@@ -386,6 +386,9 @@
  	// set debug info to print size and hash to kernel log
  	pr_info("%s: expected size: %u, expected hash: %s\n",
  		path, expected_manager_size, expected_manager_hash);
 -
 +#ifdef CONFIG_KSU_SUSFS
-+	return (check_v2_signature(path, expected_manager_hash, expected_manager_hash) || check_v2_signature(path, 384, "7e0c6d7278a3bb8e364e0fcba95afaf3666cf5ff3c245a3b63c8833bd0445cc4")); // 5ec1cff
++	return check_v2_signature(path, EXPECTED_MANAGER_SIZE, EXPECTED_MANAGER_HASH);
 +#else
  	return check_v2_signature(path, expected_manager_size, expected_manager_hash);
 +#endif
  }
 diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
 --- a/kernel/core_hook.c	2025-08-26 00:00:01.516774583 +0330
-+++ b/kernel/core_hook.c	2025-08-26 00:29:10.028773916 +0330
++++ b/kernel/core_hook.c	2025-08-26 05:35:00.977149916 +0330
 @@ -35,6 +35,10 @@
  #include <linux/vmalloc.h>
  #endif
@@ -936,10 +937,10 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
 +		susfs_set_current_proc_su_not_allowed();
 +#endif // #ifdef CONFIG_KSU_SUSFS_SUS_SU
 +		task_unlock(current);
-+	}
 +#ifdef CONFIG_KSU_SUSFS_SUS_PATH
 +		susfs_run_sus_path_loop(new_uid.val);
 +#endif // #ifdef CONFIG_KSU_SUSFS_SUS_PATH
++	}
 +#endif // #ifdef CONFIG_KSU_SUSFS
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
@@ -1021,12 +1022,12 @@ diff -Naur a/kernel/kernel_compat.c b/kernel/kernel_compat.c
  {
 diff -Naur a/kernel/kernel_compat.h b/kernel/kernel_compat.h
 --- a/kernel/kernel_compat.h	2025-08-26 00:00:01.844774582 +0330
-+++ b/kernel/kernel_compat.h	2025-08-26 00:05:02.360774468 +0330
++++ b/kernel/kernel_compat.h	2025-08-26 05:40:30.833149791 +0330
 @@ -32,6 +32,7 @@
  #endif
  
  extern void ksu_android_ns_fs_check();
-+//extern int ksu_access_ok(const void *addr, unsigned long size);
++extern int ksu_access_ok(const void *addr, unsigned long size);
  extern struct file *ksu_filp_open_compat(const char *filename, int flags,
  					 umode_t mode);
  extern ssize_t ksu_kernel_read_compat(struct file *p, void *buf, size_t count,
@@ -1101,7 +1102,7 @@ diff -Naur a/kernel/selinux/rules.c b/kernel/selinux/rules.c
  }
 diff -Naur a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
 --- a/kernel/selinux/selinux.c	2025-08-26 00:00:02.352774582 +0330
-+++ b/kernel/selinux/selinux.c	2025-08-26 00:40:25.552773658 +0330
++++ b/kernel/selinux/selinux.c	2025-08-26 05:22:40.013150199 +0330
 @@ -8,6 +8,16 @@
  
  #define KERNEL_SU_DOMAIN "u:r:su:s0"
@@ -1119,15 +1120,6 @@ diff -Naur a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
  static int transive_to_domain(const char *domain)
  {
  	struct cred *cred;
-@@ -63,7 +73,7 @@
- #endif
- }
- 
--bool getenforce()
-+bool ksu_getenforce()
- {
- #ifdef CONFIG_SECURITY_SELINUX_DISABLE
- #ifdef KSU_COMPAT_USE_SELINUX_STATE
 @@ -131,6 +141,88 @@
  	return result;
  }
@@ -1241,7 +1233,7 @@ diff -Naur a/kernel/selinux/selinux.h b/kernel/selinux/selinux.h
  #endif
 diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
 --- a/kernel/sucompat.c	2025-08-26 00:00:02.584774582 +0330
-+++ b/kernel/sucompat.c	2025-08-26 00:45:10.500773549 +0330
++++ b/kernel/sucompat.c	2025-08-26 05:49:03.517149595 +0330
 @@ -13,6 +13,9 @@
  #else
  #include <linux/sched.h>
@@ -1300,14 +1292,14 @@ diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
  	if (!ksu_is_allow_uid(current_uid().val)) {
  		return 0;
  	}
-+#endif
++#endif // CONFIG_KSU_SUSFS_SUS_SU
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_SU
 +	char path[sizeof(su) + 1] = {0};
 +#else
  	char path[sizeof(su) + 1];
  	memset(path, 0, sizeof(path));
-+#endif
++#endif // CONFIG_KSU_SUSFS_SUS_SU
  	ksu_strncpy_from_user_nofault(path, *filename_user, sizeof(path));
  
  	if (unlikely(!memcmp(path, su, sizeof(su)))) {
@@ -1350,7 +1342,7 @@ diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
  		return 0;
  	}
 -
-+#endif
++#endif // CONFIG_KSU_SUSFS_SUS_SU
  	if (unlikely(!filename_user)) {
  		return 0;
  	}
@@ -1360,7 +1352,7 @@ diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
 +#else
  	char path[sizeof(su) + 1];
  	memset(path, 0, sizeof(path));
-+#endif
++#endif // CONFIG_KSU_SUSFS_SUS_SU
  // Remove this later!! we use syscall hook, so this will never happen!!!!!
  #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 18, 0) && 0
  	// it becomes a `struct filename *` after 5.18
@@ -1380,7 +1372,7 @@ diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
 +#ifndef CONFIG_KSU_SUSFS_SUS_SU
  	if (!ksu_is_allow_uid(current_uid().val))
  		return 0;
-+#endif
++#endif // CONFIG_KSU_SUSFS_SUS_SU
  
  	pr_info("do_execveat_common su found\n");
 -	memcpy((void *)filename->name, sh, sizeof(sh));
@@ -1398,7 +1390,7 @@ diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
 +	char path[sizeof(su) + 1] = {0};
 +#else
  	char path[sizeof(su) + 1];
-+#endif
++#endif // CONFIG_KSU_SUSFS_SUS_SU
  
  #ifndef CONFIG_KSU_KPROBES_HOOK
  	if (!ksu_sucompat_non_kp) {
