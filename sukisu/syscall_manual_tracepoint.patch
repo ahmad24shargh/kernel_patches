@@ -1,6 +1,6 @@
 diff -Naur b/drivers/input/input.c c/drivers/input/input.c
 --- b/drivers/input/input.c	2025-08-27 00:34:52.510356903 +0330
-+++ c/drivers/input/input.c	2025-08-27 02:25:56.974354361 +0330
++++ c/drivers/input/input.c	2025-08-27 04:29:14.738133434 +0330
 @@ -26,6 +26,10 @@
  #include "input-compat.h"
  #include "input-poller.h"
@@ -38,7 +38,7 @@ diff -Naur b/drivers/input/input.c c/drivers/input/input.c
  		spin_lock_irqsave(&dev->event_lock, flags);
 diff -Naur b/drivers/tty/pty.c c/drivers/tty/pty.c
 --- b/drivers/tty/pty.c	2025-08-27 00:34:58.918356901 +0330
-+++ c/drivers/tty/pty.c	2025-08-27 02:28:29.074354303 +0330
++++ c/drivers/tty/pty.c	2025-08-27 04:29:14.742133434 +0330
 @@ -31,6 +31,10 @@
  #include <linux/compat.h>
  #include "tty.h"
@@ -73,8 +73,8 @@ diff -Naur b/drivers/tty/pty.c c/drivers/tty/pty.c
  	tty = devpts_get_priv(file->f_path.dentry);
  	mutex_unlock(&devpts_mutex);
 diff -Naur b/fs/exec.c c/fs/exec.c
---- b/fs/exec.c	2025-08-27 02:56:59.566353650 +0330
-+++ c/fs/exec.c	2025-08-27 02:14:48.322354616 +0330
+--- b/fs/exec.c	2025-08-27 04:28:12.346133458 +0330
++++ c/fs/exec.c	2025-08-27 04:40:00.114133188 +0330
 @@ -67,10 +67,6 @@
  #include <linux/syscall_user_dispatch.h>
  
@@ -111,11 +111,10 @@ diff -Naur b/fs/exec.c c/fs/exec.c
  static int do_execveat_common(int fd, struct filename *filename,
  			      struct user_arg_ptr argv,
  			      struct user_arg_ptr envp,
-@@ -1912,18 +1905,6 @@
- 
+@@ -1913,17 +1906,6 @@
  	if (IS_ERR(filename))
  		return PTR_ERR(filename);
--		
+ 
 -#ifdef CONFIG_KSU_SUSFS_SUS_SU
 -	if (likely(susfs_is_current_proc_su_not_allowed())) {
 -		goto orig_flow;
@@ -130,7 +129,7 @@ diff -Naur b/fs/exec.c c/fs/exec.c
  
  	/*
  	 * We move the actual failure in case of RLIMIT_NPROC excess from
-@@ -2054,12 +2035,30 @@
+@@ -2054,12 +2036,30 @@
  	return retval;
  }
  
@@ -161,7 +160,7 @@ diff -Naur b/fs/exec.c c/fs/exec.c
  	return do_execveat_common(AT_FDCWD, filename, argv, envp, 0);
  }
  
-@@ -2087,6 +2086,13 @@
+@@ -2087,6 +2087,13 @@
  		.is_compat = true,
  		.ptr.compat = __envp,
  	};
@@ -177,7 +176,7 @@ diff -Naur b/fs/exec.c c/fs/exec.c
  
 diff -Naur b/fs/open.c c/fs/open.c
 --- b/fs/open.c	2025-08-27 02:52:47.994353746 +0330
-+++ c/fs/open.c	2025-08-27 02:14:48.242354616 +0330
++++ c/fs/open.c	2025-08-27 04:29:14.746133434 +0330
 @@ -33,13 +33,14 @@
  #include <linux/dnotify.h>
  #include <linux/compat.h>
@@ -250,7 +249,7 @@ diff -Naur b/fs/open.c c/fs/open.c
  
 diff -Naur b/fs/read_write.c c/fs/read_write.c
 --- b/fs/read_write.c	2025-08-27 00:34:35.682356910 +0330
-+++ c/fs/read_write.c	2025-08-27 02:14:48.134354616 +0330
++++ c/fs/read_write.c	2025-08-27 04:29:14.750133434 +0330
 @@ -25,6 +25,10 @@
  #include <linux/uaccess.h>
  #include <asm/unistd.h>
@@ -284,8 +283,8 @@ diff -Naur b/fs/read_write.c c/fs/read_write.c
  }
  
 diff -Naur b/fs/stat.c c/fs/stat.c
---- b/fs/stat.c	2025-08-27 02:47:33.450353866 +0330
-+++ c/fs/stat.c	2025-08-27 02:22:52.514354431 +0330
+--- b/fs/stat.c	2025-08-27 04:28:35.110133449 +0330
++++ c/fs/stat.c	2025-08-27 04:34:23.606133316 +0330
 @@ -20,13 +20,16 @@
  #if defined(CONFIG_KSU_SUSFS_SUS_KSTAT) || defined(CONFIG_KSU_SUSFS_SUS_MOUNT)
  #include <linux/susfs_def.h>
@@ -304,15 +303,6 @@ diff -Naur b/fs/stat.c c/fs/stat.c
  #ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
  extern void susfs_sus_ino_for_generic_fillattr(unsigned long ino, struct kstat *stat);
  #endif
-@@ -217,7 +220,7 @@
-  *
-  * 0 will be returned on success, and a -ve error code if unsuccessful.
-  */
-- 
-+
- #ifdef CONFIG_KSU_SUSFS_SUS_SU
- extern bool susfs_is_sus_su_hooks_enabled __read_mostly;
- extern bool __ksu_is_allow_uid(uid_t uid);
 @@ -449,6 +452,10 @@
  	return cp_new_stat(&stat, statbuf);
  }
