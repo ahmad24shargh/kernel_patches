@@ -290,7 +290,7 @@ diff -Naur a/kernel/apk_sign.c b/kernel/apk_sign.c
  }
 diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
 --- a/kernel/core_hook.c	2025-09-11 00:43:17.378713480 +0330
-+++ b/kernel/core_hook.c	2025-09-11 01:14:01.603089520 +0330
++++ b/kernel/core_hook.c	2025-09-11 02:12:06.756042598 +0330
 @@ -35,6 +35,10 @@
  #include <linux/vmalloc.h>
  #endif
@@ -869,15 +869,10 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  int ksu_handle_setuid(struct cred *new, const struct cred *old)
  {
  	// this hook is used for umounting overlayfs for some uid, if there isn't any module mounted, just ignore it!
-@@ -675,11 +1174,58 @@
+@@ -675,6 +1174,55 @@
  		return 0;
  	}
  
--	if (is_non_appuid(new_uid)) {
--#ifdef CONFIG_KSU_DEBUG
--		pr_info("handle setuid ignore non application uid: %d\n", new_uid.val);
--#endif
--		return 0;
 +#ifdef CONFIG_KSU_SUSFS
 +	// check if current process is zygote
 +	bool is_zygote_child = susfs_is_sid_equal(old->security, susfs_zygote_sid);
@@ -927,13 +922,10 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
 +	}
 +#endif // #ifdef CONFIG_KSU_SUSFS
 +	
-+	if (!is_appuid(new_uid) || is_unsupported_uid(new_uid.val)) {
-+ 		// pr_info("handle setuid ignore non application or isolated uid: %d\n", new_uid.val);
-+ 		return 0;
- 	}
- 
- 	// isolated process may be directly forked from zygote, always unmount
-@@ -696,7 +1242,23 @@
+ 	if (is_non_appuid(new_uid)) {
+ #ifdef CONFIG_KSU_DEBUG
+ 		pr_info("handle setuid ignore non application uid: %d\n", new_uid.val);
+@@ -696,7 +1244,23 @@
  #endif
  		return 0;
  	}
@@ -957,7 +949,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  	if (!ksu_uid_should_umount(new_uid.val)) {
  		return 0;
  	} else {
-@@ -706,12 +1268,15 @@
+@@ -706,12 +1270,15 @@
  	}
  
  do_umount:
@@ -976,7 +968,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  		return 0;
  	}
  #ifdef CONFIG_KSU_DEBUG
-@@ -719,7 +1284,11 @@
+@@ -719,7 +1286,11 @@
  	pr_info("handle umount for uid: %d, pid: %d\n", new_uid.val,
  		current->pid);
  #endif
@@ -989,7 +981,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  	// fixme: use `collect_mounts` and `iterate_mount` to iterate all mountpoint and
  	// filter the mountpoint whose target is `/data/adb`
  	try_umount("/odm", true, 0);
-@@ -739,7 +1308,7 @@
+@@ -739,7 +1310,7 @@
  	// try umount lsposed dex2oat bins
  	try_umount("/apex/com.android.art/bin/dex2oat64", false, MNT_DETACH);
  	try_umount("/apex/com.android.art/bin/dex2oat32", false, MNT_DETACH);
