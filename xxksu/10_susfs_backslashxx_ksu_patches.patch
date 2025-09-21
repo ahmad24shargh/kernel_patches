@@ -1,7 +1,7 @@
 diff -Naur a/kernel/Kconfig b/kernel/Kconfig
---- a/kernel/Kconfig	2025-09-21 04:15:58.301120161 +0330
-+++ b/kernel/Kconfig	2025-09-21 04:37:59.294585088 +0330
-@@ -49,4 +49,139 @@
+--- a/kernel/Kconfig	2025-09-21 05:58:48.481752189 +0330
++++ b/kernel/Kconfig	2025-09-21 06:00:30.098428978 +0330
+@@ -38,4 +38,139 @@
  	  Disabling this is mostly only useful for kernel 4.1 and older.
  	  Make sure to implement manual hooks on security/security.c.
  
@@ -142,9 +142,9 @@ diff -Naur a/kernel/Kconfig b/kernel/Kconfig
 +
  endmenu
 diff -Naur a/kernel/Makefile b/kernel/Makefile
---- a/kernel/Makefile	2025-09-21 04:15:59.221120253 +0330
-+++ b/kernel/Makefile	2025-09-21 04:37:59.294585088 +0330
-@@ -116,4 +116,81 @@
+--- a/kernel/Makefile	2025-09-21 05:58:48.481752189 +0330
++++ b/kernel/Makefile	2025-09-21 06:00:30.101762312 +0330
+@@ -106,4 +106,81 @@
  ccflags-y += -Wno-implicit-function-declaration -Wno-strict-prototypes -Wno-int-conversion -Wno-gcc-compat
  ccflags-y += -Wno-declaration-after-statement -Wno-unused-function
  
@@ -227,8 +227,8 @@ diff -Naur a/kernel/Makefile b/kernel/Makefile
 +endif
  # Keep a new line here!! Because someone may append config
 diff -Naur a/kernel/allowlist.c b/kernel/allowlist.c
---- a/kernel/allowlist.c	2025-09-21 04:15:57.371120068 +0330
-+++ b/kernel/allowlist.c	2025-09-21 04:37:59.294585088 +0330
+--- a/kernel/allowlist.c	2025-09-21 05:58:48.481752189 +0330
++++ b/kernel/allowlist.c	2025-09-21 06:00:30.101762312 +0330
 @@ -95,7 +95,7 @@
  static struct work_struct ksu_save_work;
  static struct work_struct ksu_load_work;
@@ -266,10 +266,10 @@ diff -Naur a/kernel/allowlist.c b/kernel/allowlist.c
  	return ksu_queue_work(&ksu_save_work);
  }
 diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
---- a/kernel/core_hook.c	2025-09-21 04:15:57.834453448 +0330
-+++ b/kernel/core_hook.c	2025-09-21 05:16:28.724815148 +0330
-@@ -36,6 +36,10 @@
- #include <linux/vmalloc.h>
+--- a/kernel/core_hook.c	2025-09-21 05:58:48.481752189 +0330
++++ b/kernel/core_hook.c	2025-09-21 06:07:57.898473587 +0330
+@@ -25,6 +25,10 @@
+ #include <linux/syscalls.h> // sys_umount
  #endif
  
 +#ifdef CONFIG_KSU_SUSFS
@@ -277,11 +277,19 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
 +#endif // #ifdef CONFIG_KSU_SUSFS
 +
  #include "allowlist.h"
- #include "arch.h"
  #include "core_hook.h"
-@@ -47,7 +51,83 @@
+ #include "klog.h" // IWYU pragma: keep
+@@ -33,7 +37,6 @@
+ #include "manager.h"
+ #include "selinux/selinux.h"
  #include "throne_tracker.h"
+-#include "throne_tracker.h"
  #include "kernel_compat.h"
+ 
+ #ifdef CONFIG_KSU_LSM_SECURITY_HOOKS
+@@ -42,7 +45,83 @@
+ #define LSM_HANDLER_TYPE int
+ #endif
  
 -static bool ksu_module_mounted = false;
 +#ifdef CONFIG_KSU_SUSFS
@@ -361,10 +369,10 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
 +
 +
 +bool ksu_module_mounted = false;
+ static unsigned int ksu_unmountable_count = 0;
  
  extern int handle_sepolicy(unsigned long arg3, void __user *arg4);
- 
-@@ -391,6 +471,9 @@
+@@ -405,6 +484,9 @@
  		switch (arg3) {
  		case EVENT_POST_FS_DATA: {
  			static bool post_fs_data_lock = false;
@@ -374,7 +382,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  			if (!post_fs_data_lock) {
  				post_fs_data_lock = true;
  				pr_info("post-fs-data triggered\n");
-@@ -495,6 +578,12 @@
+@@ -519,6 +601,12 @@
  		}
  
  		if (enabled) {
@@ -387,9 +395,9 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  			ksu_sucompat_init();
  		} else {
  			ksu_sucompat_exit();
-@@ -509,6 +598,379 @@
+@@ -531,6 +619,379 @@
+ 		return 0;
  	}
- #endif
  
 +#ifdef CONFIG_KSU_SUSFS
 +	if (current_uid_val == 0) {
@@ -767,9 +775,21 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  	// all other cmds are for 'root manager'
  	if (!from_manager) {
  		return 0;
-@@ -612,6 +1074,12 @@
- 			current_uid().val);
- 		return false;
+@@ -620,7 +1081,11 @@
+ }
+ #endif // KSU_HAS_PATH_UMOUNT
+ 
++#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
++void try_umount(const char *mnt, int flags, uid_t uid)
++#else
+ static void try_umount(const char *mnt, int flags)
++#endif
+ {
+ 	struct path path;
+ 	int err = kern_path(mnt, 0, &path);
+@@ -633,6 +1098,12 @@
+ 		path_put(&path);
+ 		return;
  	}
 +	
 +#if defined(CONFIG_KSU_SUSFS_TRY_UMOUNT) && defined(CONFIG_KSU_SUSFS_ENABLE_LOG)
@@ -778,22 +798,10 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
 +	}
 +#endif
  
- 	if (path->mnt && path->mnt->mnt_sb && path->mnt->mnt_sb->s_type) {
- 		const char *fstype = path->mnt->mnt_sb->s_type->name;
-@@ -630,7 +1098,11 @@
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0) || defined(KSU_HAS_PATH_UMOUNT)
+ 	ksu_path_umount(mnt, &path, flags);
+@@ -646,10 +1117,28 @@
  #endif
- }
- 
-+#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
-+void try_umount(const char *mnt, bool check_mnt, int flags, uid_t uid)
-+#else
- static void try_umount(const char *mnt, bool check_mnt, int flags)
-+#endif
- {
- 	struct path path;
- 	int err = kern_path(mnt, 0, &path);
-@@ -656,6 +1128,22 @@
- 	}
  }
  
 +#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
@@ -812,10 +820,17 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
 +	try_umount("/debug_ramdisk", MNT_DETACH, uid);
 +}
 +#endif
- int ksu_handle_setuid(struct cred *new, const struct cred *old)
++
+ LSM_HANDLER_TYPE ksu_handle_setuid(struct cred *new, const struct cred *old)
  {
++#ifndef CONFIG_KSU_SUSFS	
+ 	struct mount_entry *entry;
+-
++#endif
  	// this hook is used for umounting overlayfs for some uid, if there isn't any module mounted, just ignore it!
-@@ -674,6 +1162,55 @@
+ 	if (!ksu_module_mounted) {
+ 		return 0;
+@@ -670,6 +1159,55 @@
  		// old process is not root, ignore it.
  		return 0;
  	}
@@ -871,7 +886,7 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  
  	if (is_non_appuid(new_uid)) {
  #ifdef CONFIG_KSU_DEBUG
-@@ -696,7 +1233,23 @@
+@@ -692,7 +1230,23 @@
  #endif
  		return 0;
  	}
@@ -895,32 +910,29 @@ diff -Naur a/kernel/core_hook.c b/kernel/core_hook.c
  	if (!ksu_uid_should_umount(new_uid.val)) {
  		return 0;
  	} else {
-@@ -719,7 +1272,11 @@
+@@ -714,12 +1268,16 @@
+ 	// umount the target mnt
  	pr_info("handle umount for uid: %d, pid: %d\n", new_uid.val,
  		current->pid);
- #endif
 -
 +#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
 +out_susfs_try_umount_all:
 +	// susfs come first, and lastly umount by ksu, make sure umount in reversed order
 +	susfs_try_umount_all(new_uid.val);
 +#else
- 	// fixme: use `collect_mounts` and `iterate_mount` to iterate all mountpoint and
- 	// filter the mountpoint whose target is `/data/adb`
- 	try_umount("/odm", true, 0);
-@@ -739,7 +1296,7 @@
- 	// try umount lsposed dex2oat bins
- 	try_umount("/apex/com.android.art/bin/dex2oat64", false, MNT_DETACH);
- 	try_umount("/apex/com.android.art/bin/dex2oat32", false, MNT_DETACH);
+ 	// don't free! keep on heap! this is used on subsequent setuid calls
+ 	// if this is freed, we dont have anything to umount next
+ 	list_for_each_entry(entry, &mount_list, list)
+ 		try_umount(entry->umountable, MNT_DETACH);
 -
 +#endif
  	return 0;
  }
  
 diff -Naur a/kernel/kernel_compat.h b/kernel/kernel_compat.h
---- a/kernel/kernel_compat.h	2025-09-21 04:15:58.497786847 +0330
-+++ b/kernel/kernel_compat.h	2025-09-21 04:37:59.301251756 +0330
-@@ -32,6 +32,7 @@
+--- a/kernel/kernel_compat.h	2025-09-21 05:58:48.481752189 +0330
++++ b/kernel/kernel_compat.h	2025-09-21 06:00:30.101762312 +0330
+@@ -11,6 +11,7 @@
  #endif
  
  extern void ksu_android_ns_fs_check();
@@ -929,9 +941,9 @@ diff -Naur a/kernel/kernel_compat.h b/kernel/kernel_compat.h
  					 umode_t mode);
  extern ssize_t ksu_kernel_read_compat(struct file *p, void *buf, size_t count,
 diff -Naur a/kernel/ksu.c b/kernel/ksu.c
---- a/kernel/ksu.c	2025-09-21 04:15:58.694453534 +0330
-+++ b/kernel/ksu.c	2025-09-21 04:37:59.301251756 +0330
-@@ -11,6 +11,10 @@
+--- a/kernel/ksu.c	2025-09-21 05:58:48.481752189 +0330
++++ b/kernel/ksu.c	2025-09-21 06:00:30.101762312 +0330
+@@ -13,6 +13,10 @@
  #include "ksu.h"
  #include "throne_tracker.h"
  
@@ -942,7 +954,7 @@ diff -Naur a/kernel/ksu.c b/kernel/ksu.c
  static struct workqueue_struct *ksu_workqueue;
  
  bool ksu_queue_work(struct work_struct *work)
-@@ -45,6 +49,10 @@
+@@ -90,6 +94,10 @@
  	pr_alert("*************************************************************");
  #endif
  
@@ -954,11 +966,11 @@ diff -Naur a/kernel/ksu.c b/kernel/ksu.c
  
  	ksu_workqueue = alloc_ordered_workqueue("kernelsu_work_queue", 0);
 diff -Naur a/kernel/ksud.c b/kernel/ksud.c
---- a/kernel/ksud.c	2025-09-21 04:15:58.937786891 +0330
-+++ b/kernel/ksud.c	2025-09-21 04:52:19.434670774 +0330
-@@ -64,6 +64,10 @@
+--- a/kernel/ksud.c	2025-09-21 05:58:48.481752189 +0330
++++ b/kernel/ksud.c	2025-09-21 06:00:30.101762312 +0330
+@@ -61,6 +61,10 @@
+ bool ksu_execveat_hook __read_mostly = true;
  bool ksu_input_hook __read_mostly = true;
- #endif
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_SU
 +bool susfs_is_sus_su_ready = false;
@@ -967,21 +979,21 @@ diff -Naur a/kernel/ksud.c b/kernel/ksud.c
  u32 ksu_devpts_sid;
  
  void on_post_fs_data(void)
-@@ -679,6 +683,10 @@
- #else
+@@ -464,6 +468,10 @@
+ {
  	ksu_execveat_hook = false;
  	pr_info("stop execve_hook\n");
 +#ifdef CONFIG_KSU_SUSFS_SUS_SU
 +	susfs_is_sus_su_ready = true;
 +	pr_info("susfs: sus_su is ready\n");
 +#endif
- #endif
  }
  
+ static void stop_input_hook()
 diff -Naur a/kernel/selinux/rules.c b/kernel/selinux/rules.c
---- a/kernel/selinux/rules.c	2025-09-21 04:15:56.801120012 +0330
-+++ b/kernel/selinux/rules.c	2025-09-21 04:37:59.301251756 +0330
-@@ -138,6 +138,15 @@
+--- a/kernel/selinux/rules.c	2025-09-21 05:58:48.481752189 +0330
++++ b/kernel/selinux/rules.c	2025-09-21 06:00:30.101762312 +0330
+@@ -139,6 +139,15 @@
  	// Allow system server kill su process
  	ksu_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "getpgid");
  	ksu_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "sigkill");
@@ -998,8 +1010,8 @@ diff -Naur a/kernel/selinux/rules.c b/kernel/selinux/rules.c
  	mutex_unlock(&ksu_rules);
  }
 diff -Naur a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
---- a/kernel/selinux/selinux.c	2025-09-21 04:15:56.884453353 +0330
-+++ b/kernel/selinux/selinux.c	2025-09-21 04:37:59.301251756 +0330
+--- a/kernel/selinux/selinux.c	2025-09-21 05:58:48.481752189 +0330
++++ b/kernel/selinux/selinux.c	2025-09-21 06:00:30.105095646 +0330
 @@ -8,6 +8,16 @@
  
  #define KERNEL_SU_DOMAIN "u:r:su:s0"
@@ -1107,8 +1119,8 @@ diff -Naur a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
  
  u32 ksu_get_devpts_sid()
 diff -Naur a/kernel/selinux/selinux.h b/kernel/selinux/selinux.h
---- a/kernel/selinux/selinux.h	2025-09-21 04:15:56.961120028 +0330
-+++ b/kernel/selinux/selinux.h	2025-09-21 04:37:59.301251756 +0330
+--- a/kernel/selinux/selinux.h	2025-09-21 05:58:48.481752189 +0330
++++ b/kernel/selinux/selinux.h	2025-09-21 06:00:30.105095646 +0330
 @@ -20,6 +20,18 @@
  
  void apply_kernelsu_rules();
@@ -1129,9 +1141,9 @@ diff -Naur a/kernel/selinux/selinux.h b/kernel/selinux/selinux.h
  
  #endif
 diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
---- a/kernel/sucompat.c	2025-09-21 04:15:59.507786948 +0330
-+++ b/kernel/sucompat.c	2025-09-21 04:45:42.461297895 +0330
-@@ -14,6 +14,9 @@
+--- a/kernel/sucompat.c	2025-09-21 05:58:48.481752189 +0330
++++ b/kernel/sucompat.c	2025-09-21 06:00:30.105095646 +0330
+@@ -13,6 +13,9 @@
  #else
  #include <linux/sched.h>
  #endif
@@ -1140,10 +1152,10 @@ diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
 +#endif
  
  #include "objsec.h"
- #include "arch.h"
-@@ -31,7 +34,11 @@
+ #include "allowlist.h"
+@@ -27,7 +30,11 @@
  
- extern void escape_to_root();
+ static bool ksu_sucompat_non_kp __read_mostly = true;
  
 -static void __user *userspace_stack_buffer(const void *d, size_t len)
 +static const char sh_path[] = "/system/bin/sh";
@@ -1154,7 +1166,7 @@ diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
  {
  	/* To avoid having to mmap a page in userspace, just write below the stack
     * pointer. */
-@@ -40,17 +47,13 @@
+@@ -36,17 +43,13 @@
  	return copy_to_user(p, d, len) ? NULL : p;
  }
  
@@ -1173,10 +1185,10 @@ diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
  	return userspace_stack_buffer(ksud_path, sizeof(ksud_path));
  }
  
-@@ -65,10 +68,10 @@
- 		return 0;
- 	}
- #endif
+@@ -57,10 +60,10 @@
+ 	barrier();
+ 	if (!ksu_sucompat_non_kp)
+ 		return false;
 -
 +#ifndef CONFIG_KSU_SUSFS_SUS_SU
  	if (likely(!ksu_is_allow_uid(current_uid().val)))
@@ -1186,20 +1198,20 @@ diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
  	if (unlikely(!ptr_to_check))
  		return false;
  
-@@ -80,8 +83,11 @@
+@@ -72,8 +75,11 @@
  				const bool escalate)
  {
  	const char su[] = SU_PATH;
 -
 +#ifdef CONFIG_KSU_SUSFS_SUS_SU
-+	char path[sizeof(su) + 1] = {0};
++	char path[sizeof(su)] = {0};
 +#else
- 	char path[sizeof(su) + 1]; // sizeof includes nullterm already!
-+#endif	
- 	long len = ksu_strncpy_from_user_retry(path, *filename_user, sizeof(path));
- 	if (len <= 0) // sizeof(su) is not zero
+ 	char path[sizeof(su)]; // sizeof includes nullterm already!
++#endif
+ 	if (ksu_copy_from_user_retry(path, *filename_user, sizeof(path)))
  		return 0;
-@@ -120,6 +126,25 @@
+ 
+@@ -104,6 +110,25 @@
  	return ksu_sucompat_user_common(filename_user, "faccessat", false);
  }
  
@@ -1225,9 +1237,9 @@ diff -Naur a/kernel/sucompat.c b/kernel/sucompat.c
  // sys_newfstatat, sys_fstat64
  int ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags)
  {
-@@ -332,3 +357,41 @@
+@@ -248,3 +273,41 @@
+ 	ksu_sucompat_non_kp = false;
  	pr_info("ksu_sucompat_exit: hooks disabled: execve/execveat_su, faccessat, stat, devpts\n");
- #endif
  }
 +
 +#ifdef CONFIG_KSU_SUSFS_SUS_SU
