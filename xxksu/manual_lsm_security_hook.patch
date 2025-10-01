@@ -83,7 +83,7 @@ diff -Naur a/security/security.c b/security/security.c
  			    enum key_need_perm need_perm)
  {
 +#ifdef CONFIG_KSU
-+	ksu_key_permission(key_ref, cred, need_perm;
++	ksu_key_permission(key_ref, cred, need_perm);
 +#endif	
  	return call_int_hook(key_permission, 0, key_ref, cred, need_perm);
  }
