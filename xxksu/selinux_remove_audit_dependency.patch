@@ -35,8 +35,7 @@ diff -Naur a/include/linux/lsm_audit.h b/include/linux/lsm_audit.h
 +#endif
  
  #endif
-diff -Naur a/‎security/selinux/Kconfig
-b/‎security/selinux/Kconfig
+diff -Naur a/‎security/selinux/Kconfig b/‎security/selinux/Kconfig
 --- a/‎security/selinux/Kconfig	2025-10-14 00:48:37.346944355 +0330
 +++ b/‎security/selinux/Kconfig	2025-10-14 00:56:16.086990054 +0330
 @@ -1,7 +1,7 @@
