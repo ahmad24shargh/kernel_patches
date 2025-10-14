@@ -1,0 +1,245 @@
+diff -Naur a/drivers/kernelsu/core_hook.c b/drivers/kernelsu/core_hook.c
+--- a/drivers/kernelsu/core_hook.c	2025-10-15 01:40:55.966604290 +0330
++++ b/drivers/kernelsu/core_hook.c	2025-10-15 01:25:14.806510531 +0330
+@@ -268,6 +268,20 @@
+ };
+ LIST_HEAD(mount_list);
+ 
++#define CUSTOM_CMD1 0x11001 // add to list
++#define CUSTOM_CMD2 0x11002 // destroy list
++#define CUSTOM_CMD3 0x11003 // skip rwxp enable
++#define CUSTOM_CMD4 0x11004 // skip rwxp disable
++
++struct string_entry {
++    char *string;
++    struct list_head list;
++};
++LIST_HEAD(string_list);
++
++atomic_t skip_rwxp = ATOMIC_INIT(0);
++EXPORT_SYMBOL(skip_rwxp); 
++
+ LSM_HANDLER_TYPE ksu_handle_prctl(int option, unsigned long arg2, unsigned long arg3,
+ 		     unsigned long arg4, unsigned long arg5)
+ {
+@@ -342,7 +356,78 @@
+ 		// only root or manager can access this interface
+ 		return 0;
+ 	}
++	
++		if (arg2 == CUSTOM_CMD1) {
++		struct string_entry new_entry, *entry;
++		char buf[64];
++		memzero_explicit(buf, 64);
++	
++		if (copy_from_user(buf, (const char __user *)arg3, sizeof(buf) - 1)) {
++			pr_err("cmd_add_try_umount: failed to copy user string\n");
++			return 0;
++		}
++		buf[64 - 1] = '\0';
++		
++		new_entry = kmalloc(sizeof(*new_entry), GFP_KERNEL);
++		if (!new_entry)
++			return 0;
+ 
++		new_entry->string = kstrdup(buf, GFP_KERNEL);		
++		if (!new_entry->string) {
++			kfree(new_entry);
++			return 0;
++		}
++		
++		list_for_each_entry(entry, &string_list, list) {
++			if (!strcmp(entry->string, buf))
++				return 0;
++		}	
++		
++		pr_info("entry: %s added!\n", buf);
++		list_add(&new_entry->list, &string_list);
++		smp_mb();
++		
++		unsigned long result = 0x54321;
++		if (copy_to_user((void __user *)arg5, &result, sizeof(result)))
++			return 0;
++	}
++	
++	if (arg2 == CUSTOM_CMD2) {
++		struct string_entry *entry, *tmp;
++
++		list_for_each_entry_safe(entry, tmp, &string_list, list) {
++        		pr_info("entry: %s removed!\n", entry->string);
++        		list_del(&entry->list);
++        		kfree(entry->string);
++        		kfree(entry);
++        	}
++        	
++        	smp_mb();
++
++		unsigned long result = 0x54321;
++		if (copy_to_user((void __user *)arg5, &result, sizeof(result)))
++			return 0;
++	}
++
++	if (arg2 == CUSTOM_CMD3) {
++		
++		unsigned long result;
++		atomic_set(&skip_rwxp, 1);
++		result = 0x1;
++		
++		if (copy_to_user((void __user *)arg5, &result, sizeof(result)))
++			return 0;
++	}
++
++	if (arg2 == CUSTOM_CMD4) {
++		
++		unsigned long result;
++		atomic_set(&skip_rwxp, 0);
++		result = 0x0;
++		if (copy_to_user((void __user *)arg5, &result, sizeof(result)))
++			return 0;
++	}
++	
+ 	if (arg2 == CMD_ADD_TRY_UMOUNT) {
+ 		struct mount_entry *new_entry, *entry;
+ 		char buf[384];
+diff -Naur a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
+--- a/fs/proc/task_mmu.c	2025-10-15 01:40:01.689932216 +0330
++++ b/fs/proc/task_mmu.c	2025-10-15 01:31:58.916550789 +0330
+@@ -86,6 +86,16 @@
+ 	return PAGE_SIZE * mm->total_vm;
+ }
+ 
++#include <linux/version.h>
++struct string_entry {
++    char *string;
++    struct list_head list;
++};
++extern struct list_head maps_string_list; // this is on ksu's core_hook.c
++
++extern atomic_t skip_rwxp;
++extern atomic_t skip_rxp;
++
+ unsigned long task_statm(struct mm_struct *mm,
+ 			 unsigned long *shared, unsigned long *text,
+ 			 unsigned long *data, unsigned long *resident)
+@@ -280,12 +290,100 @@
+ 	unsigned long start, end;
+ 	dev_t dev = 0;
+ 	const char *name = NULL;
++	
++	struct string_entry *entry, *tmp;
++
++	// skip rwxp and two entries after it
++	if (atomic_read(&skip_rwxp)) {
++		static int skip_count = 0;	
++		if (skip_count > 0) {
++			skip_count--;
++			seq_printf(m, "%08lx-%08lx ---- 00000000 00:00 0  \n",vma->vm_start, vma->vm_end);
++			return;
++		}
++		
++		if ((vma->vm_flags & (VM_READ | VM_WRITE | VM_EXEC)) == (VM_READ | VM_WRITE | VM_EXEC) && !(vma->vm_flags & VM_MAYSHARE) && !vma->vm_file) {
++			/* if VMA has a name (like [vdso], [anon:xxxx]), don't skip */
++			const char *vma_name = NULL;
++#if IS_ENABLED(CONFIG_MMU)
++			vma_name = arch_vma_name(vma);
++#endif
++#ifdef CONFIG_KALLSYMS
++			if (!vma_name)
++				vma_name = vma->vm_ops && vma->vm_ops->name ?
++							vma->vm_ops->name(vma) : NULL;
++#endif
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
++			/* fallback: check anon_vma_name() for [anon:*] mappings */
++			if (!vma_name && vma->vm_mm)
++				if (anon_vma_name(vma))
++					goto skip_done;  // IS [anon:xxxx] → show normally
++#else
++			if (vma_get_anon_name(vma))
++				goto skip_done;  // IS [anon:xxxx] → show normally
++#endif
++			if (vma_name)
++				goto skip_done;  // has a name → show normally
++
++			seq_printf(m, "%08lx-%08lx ---- 00000000 00:00 0  \n",vma->vm_start, vma->vm_end);
++			skip_count = 0;
++			return;
++		}
++	}
++	// skip r-xp and two entries after it
++	if (atomic_read(&skip_rxp)) {
++		static int skip_count = 0;	
++		if (skip_count > 0) {
++			skip_count--;
++			seq_printf(m, "%08lx-%08lx ---- 00000000 00:00 0  \n",vma->vm_start, vma->vm_end);
++			return;
++		}
++		
++		if ((vma->vm_flags & (VM_READ | VM_EXEC)) == (VM_READ | VM_EXEC) && !(vma->vm_flags & VM_MAYSHARE) && !vma->vm_file) {
++			/* if VMA has a name (like [vdso], [anon:xxxx]), don't skip */
++			const char *vma_name = NULL;
++#if IS_ENABLED(CONFIG_MMU)
++			vma_name = arch_vma_name(vma);
++#endif
++#ifdef CONFIG_KALLSYMS
++			if (!vma_name)
++				vma_name = vma->vm_ops && vma->vm_ops->name ?
++							vma->vm_ops->name(vma) : NULL;
++#endif
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
++			/* fallback: check anon_vma_name() for [anon:*] mappings */
++			if (!vma_name && vma->vm_mm)
++				if (anon_vma_name(vma))
++					goto skip_done;  // IS [anon:xxxx] → show normally
++#else
++			if (vma_get_anon_name(vma))
++				goto skip_done;  // IS [anon:xxxx] → show normally
++#endif
++			if (vma_name)
++				goto skip_done;  // has a name → show normally
++
++			seq_printf(m, "%08lx-%08lx ---- 00000000 00:00 0  \n",vma->vm_start, vma->vm_end);
++			skip_count = 0;
++			return;
++		}
++	}
+ 
++	skip_done:
+ 	if (file) {
+ 		struct inode *inode = file_inode(vma->vm_file);
+ 		dev = inode->i_sb->s_dev;
+ 		ino = inode->i_ino;
+ 		pgoff = ((loff_t)vma->vm_pgoff) << PAGE_SHIFT;
++		
++		if (file->f_path.dentry) {
++			smp_mb();
++			list_for_each_entry_safe(entry, tmp, &maps_string_list, list) {
++				if (strstr(file->f_path.dentry->d_name.name, entry->string)) {
++					seq_printf(m, "%08lx-%08lx ---- 00000000 00:00 0  \n",vma->vm_start, vma->vm_end);
++					return;
++				}
++			}
++		}
+ 	}
+ 
+ 	start = vma->vm_start;
+diff -Naur a/kernel/reboot.c b/kernel/reboot.c
+--- a/kernel/reboot.c	2025-10-15 01:40:30.943268464 +0330
++++ b/kernel/reboot.c	2025-10-15 01:35:19.343237422 +0330
+@@ -313,12 +313,17 @@
+  *
+  * reboot doesn't sync: do that yourself before calling this.
+  */
++ 
++extern int lkm_handle_sys_reboot(int magic1, int magic2, unsigned int cmd, void __user *arg);
++
+ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
+ 		void __user *, arg)
+ {
+ 	struct pid_namespace *pid_ns = task_active_pid_ns(current);
+ 	char buffer[256];
+ 	int ret = 0;
++	
++	lkm_handle_sys_reboot(magic1, magic2, cmd, arg);
+ 
+ 	/* We only trust the superuser with rebooting the system. */
+ 	if (!ns_capable(pid_ns->user_ns, CAP_SYS_BOOT))
