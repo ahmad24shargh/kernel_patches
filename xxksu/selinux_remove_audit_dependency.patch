@@ -1,0 +1,49 @@
+diff -Naur a/include/linux/audit.h b/include/linux/audit.h
+--- a/include/linux/audit.h	2025-10-14 21:16:33.839845602 +0330
++++ b/include/linux/audit.h	2025-10-14 21:20:15.716534372 +0330
+@@ -260,7 +260,10 @@
+ {
+ 	return AUDIT_SID_UNSET;
+ }
+-
++static inline int audit_update_lsm_rules(void)
++{
++	return AUDIT_OFF;
++}
+ #define audit_enabled AUDIT_OFF
+ 
+ static inline int audit_signal_info(int sig, struct task_struct *t)
+diff -Naur a/include/linux/lsm_audit.h b/include/linux/lsm_audit.h
+--- a/include/linux/lsm_audit.h	2025-10-14 21:16:33.669845585 +0330
++++ b/include/linux/lsm_audit.h	2025-10-14 21:20:15.716534372 +0330
+@@ -119,9 +119,17 @@
+ 
+ int ipv6_skb_to_auditdata(struct sk_buff *skb,
+ 		struct common_audit_data *ad, u8 *proto);
+-
++		
++#ifdef CONFIG_AUDIT
+ void common_lsm_audit(struct common_audit_data *a,
+ 	void (*pre_audit)(struct audit_buffer *, void *),
+ 	void (*post_audit)(struct audit_buffer *, void *));
++#else
++static inline void common_lsm_audit(struct common_audit_data *a,
++	void (*pre_audit)(struct audit_buffer *, void *),
++	void (*post_audit)(struct audit_buffer *, void *))
++{
++}
++#endif
+ 
+ #endif
+diff -Naur a/security/selinux/Kconfig b/security/selinux/Kconfig
+--- a/security/selinux/Kconfig	2025-10-14 21:15:13.239837573 +0330
++++ b/security/selinux/Kconfig	2025-10-14 21:20:39.449870069 +0330
+@@ -1,7 +1,7 @@
+ # SPDX-License-Identifier: GPL-2.0-only
+ config SECURITY_SELINUX
+ 	bool "NSA SELinux Support"
+-	depends on SECURITY_NETWORK && AUDIT && NET && INET
++	depends on SECURITY_NETWORK &&  NET && INET
+ 	select NETWORK_SECMARK
+ 	default n
+ 	help
