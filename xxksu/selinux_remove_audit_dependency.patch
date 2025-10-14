@@ -35,6 +35,23 @@ diff -Naur a/include/linux/lsm_audit.h b/include/linux/lsm_audit.h
 +#endif
  
  #endif
+diff -Naur a/security/lsm_audit.c b/security/lsm_audit.c
+--- a/security/lsm_audit.c	2025-10-14 22:31:45.619433650 +0330
++++ b/security/lsm_audit.c	2025-10-14 22:34:11.679448200 +0330
+@@ -445,6 +445,7 @@
+  * setup the audit buffer for common security information
+  * uses callback to print LSM specific information
+  */
++#ifdef CONFIG_AUDIT 
+ void common_lsm_audit(struct common_audit_data *a,
+ 	void (*pre_audit)(struct audit_buffer *, void *),
+ 	void (*post_audit)(struct audit_buffer *, void *))
+@@ -470,3 +471,4 @@
+ 
+ 	audit_log_end(ab);
+ }
++#endif
+\ No newline at end of file
 diff -Naur a/security/selinux/Kconfig b/security/selinux/Kconfig
 --- a/security/selinux/Kconfig	2025-10-14 21:15:13.239837573 +0330
 +++ b/security/selinux/Kconfig	2025-10-14 21:20:39.449870069 +0330
