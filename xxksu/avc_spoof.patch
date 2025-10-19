@@ -1,0 +1,25 @@
+diff -Naur a/security/selinux/avc.c b/security/selinux/avc.c
+--- a/security/selinux/avc.c	2025-10-19 18:17:05.636526855 +0330
++++ b/security/selinux/avc.c	2025-10-19 18:18:49.023203822 +0330
+@@ -767,6 +767,10 @@
+ 	}
+ }
+ 
++#ifdef CONFIG_KSU
++extern int ksu_handle_slow_avc_audit(u32 *tsid);
++#endif
++
+ /*
+  * This is the slow part of avc audit with big stack footprint.
+  * Note that it is non-blocking and can be called from under
+@@ -779,6 +783,10 @@
+ {
+ 	struct common_audit_data stack_data;
+ 	struct selinux_audit_data sad;
++	
++#ifdef CONFIG_KSU
++	ksu_handle_slow_avc_audit(&tsid);
++#endif
+ 
+ 	if (WARN_ON(!tclass || tclass >= ARRAY_SIZE(secclass_map)))
+ 		return -EINVAL;
